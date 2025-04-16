@@ -13,26 +13,30 @@ const server = http.createServer((req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    handleAPIRoutes(req, res).then(() => { console.log(`Request method: ${req.method}, URL: ${req.url}`); })
+    handleAPIRoutes(req, res)?.then(() => { console.log(`Request method: ${req.method}, URL: ${req.url}`); })
         .catch((err) => {
             console.error('Error handling request:', err);
             res.statusCode = 500;
             res.end('Internal Server Error');
-        });
+        }).catch((err => {
+            console.error('Error handling request:', err);
+            res.statusCode = 500;
+            res.end('Internal Server Error');
+        }));
 });
 
 try {
   (async () => {
     await dbConnection.connect();
-  }
-  )().catch((error) => {
-    throw error
+  })().catch((error) => {
+    throw error;
   });
+
   server.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
   });
 } catch (error) {
-  console.error('Error starting the server:', error);
-  dbConnection.disconnect();
-  process.exit(1);
+    console.error('Error starting the server:', error);
+    dbConnection.disconnect();
+    process.exit(1);
 }

@@ -2,7 +2,9 @@ import Student from '../schemas/student.schema.js';
 import { handleResponse } from '../utils/response.js';
 import { authService } from './controllers.js';
 class StudentController {
-    controller(configuration) {
+
+    constructor(configuration) {
+        console.log(configuration)
         this.studentService = configuration.studentService;
     }
 
@@ -47,7 +49,7 @@ class StudentController {
         try {
             const value = req?.params[key];
             if (!value) throw new Error(`${key} is required`);
-
+            console.log(this.studentService)
             const query = key === 'id'
                 ? this.studentService.findById(value)
                 : this.studentService.find({ [key]: value }).exec();
@@ -76,17 +78,15 @@ class StudentController {
                 return handleResponse(res, 404, "Student not found");
             }
             const currentPassword = student.password ? newPassword : password;
-            const toChange = await authService.comparePassword(username, currentPassword);
+            const toChange = await authService.comparePassword(username, currentPassword, res);
             if (toChange) {
-                const encrypted_password = await bcrypt.hash(newPassword, 10);
-                student.password = encrypted_password;
+                const {iv, encryptedData} = encrypt(newPassword);
+                student.password = iv + ":" + encryptedData;
+                await student.save();
+                return handleResponse(res, 200, "Password updated", student);
             } else {
                 return handleResponse(res, 401, "Password is invalid, make sure it is the right one!");
             }
-            const encrypted_password = await bcrypt.hash(password, 10);
-            student.password = encrypted_password;
-            await student.save();
-            return handleResponse(res, 200, "Password updated", student);
         } catch (error) {
             return handleResponse(res, 500, error.message);   
         }

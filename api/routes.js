@@ -1,21 +1,25 @@
 import { studentService, authService } from '../controller/controllers.js';
 import { parse } from 'url';
+import { handleBody } from '../utils/response.js';
 
-const handleStudentsRoutes = async (req, res, action) => { 
+const handleStudentsRoutes = async (req, res, conf) => { 
+    const { action, query } = conf;
     const parsedUrl = parse(action, true);
-    const { pathname, query } = parsedUrl;
+    const { method } = req;
+    const { pathname } = parsedUrl;
+    console.log(query)
     // * action example search?id=123
     if (method === 'GET') {
         if (pathname === 'search' && query) {
             const { firstName, lastName, username, id } = query;
             if (firstName && lastName) {
-                return studentService.getStudentByNameSurname(req, res);
+                return studentService.getStudentByNameSurname({ params: { firstName, lastName } }, res);
             }
             else if (username) {
-                return studentService.getStudent(req, res, 'username');
+                return studentService.getStudent({ params: { username } } , res, 'username');
             }
             else if (id) {
-                return studentService.getStudent(req, res, 'id');
+                return studentService.getStudent({ params: { id } }, res, 'id');
             }
             else {
                 return studentService.unhandledError(req, res, 'id or username is required');
@@ -34,18 +38,22 @@ const handleStudentsRoutes = async (req, res, action) => {
     }
 }
 
-const handleAuthRoutes = async (req, res, action) => { 
+const handleAuthRoutes = async (req, res, conf) => { 
+    const { action, query } = conf;
     const parsedUrl = parse(action, true);
-    const { pathname, query } = parsedUrl;
+    const { pathname } = parsedUrl;
+    const { method } = req;
     // * action example search?id=123
     if (method === 'GET') {
     }
     else if (method === "POST") {
+        const body = await handleBody(req);
+        req.body = body;
         if (pathname === 'login') {
-            return authService.login(req, res);
+            return await authService.login(req, res);
         }
         else if (pathname === 'updatePassword') {
-            return studentService.updatePassword(req, res);
+            return await studentService.updatePassword(req, res);
         }
     }
 }
@@ -53,26 +61,25 @@ const handleAuthRoutes = async (req, res, action) => {
 
 
 export const handleAPIRoutes = (req, res) => {
-    const parsedUrl = parse(req.url, true); // true → to get query as an object
-    const { pathname, query } = parsedUrl;
-
+    const parsedUrl = parse(req.url, true);
+    let { pathname, query: {...query} } = parsedUrl;
     if (pathname.startsWith("/api")) {
-        pathname = pathname.split("/").slice(2).join("/");
-        const [controller, action] = pathname.split("/");
-
+        pathname = pathname.split("/").slice(2)
+        const [controller, action] = pathname;
         switch (controller) {
         case "students":
-            return handleStudentsRoutes(req, res, action);
+            return handleStudentsRoutes(req, res, {action, query});
         case "activities":
-            return handleActivitiesRoutes(req, res, action);
+            return handleActivitiesRoutes(req, res, {action, query});
         case "auth":
-            return handleAuthRoutes(req, res, action);
+            return handleAuthRoutes(req, res, {action, query});
         default:
-            return ;
+            
         }
     }
-
-    return new Promise((resolve, reject) => {
-        resolve();
-    });
+    else {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "Not Found" }));
+        return;
+    }
 };

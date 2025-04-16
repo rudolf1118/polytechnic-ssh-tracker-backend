@@ -35,12 +35,12 @@ const handleGroupBy = (data, key) => {
 }
 
 export const checkCredentials = async (username, password) => {
-    await SSHConnection.checkCredentials(username, password).catch((err => {  
+    return await SSHConnection.checkCredentials(username, password).catch((err => {  
         throw err;
     }));
 }
 
-(async () => {
+export const connectAndExecuteSSH = async () => {
     try {
         const sshClient = SSHConnection;
         await sshClient.connect();
@@ -56,4 +56,4 @@ export const checkCredentials = async (username, password) => {
     } catch (err) {
         console.error('🔥 Error:', err.message);
     }
-})();
+}
