@@ -1,6 +1,6 @@
 import Student from '../schemas/student.schema.js';
 import { handleResponse } from '../utils/response.js';
-
+import { authService } from './controllers.js';
 class StudentController {
     controller(configuration) {
         this.studentService = configuration.studentService;
@@ -20,8 +20,24 @@ class StudentController {
 
     async createStudent(req, res) {
         try {
-            const student = await this.studentService.createStudent(req.body);
-            return handleResponse(res, 201, "Student created", student);
+            const { firstNameEN, lastNameEN, username } = req.body;
+            if (!firstNameEN || !lastNameEN || !username) {
+                return handleResponse(res, 400, "firstNameEN, lastNameEN and username are required");
+            }
+            const existingStudent = await this.studentService.findOne({ username });
+            if (existingStudent) {
+                return handleResponse(res, 409, "Student already exists");
+            }
+            // * Create new student
+            const newStudent = new Student({
+                username,
+                firstNameEN,
+                lastNameEN,
+                activities: []
+            }
+            );
+            await newStudent.save();
+            return handleResponse(res, 201, "Student created", newStudent);
         } catch (error) {
             return handleResponse(res, 500, error.message);
         }
@@ -45,6 +61,34 @@ class StudentController {
             return handleResponse(res, 200, "Student found", student);
         } catch (error) {
             return handleResponse(res, 500, error.message);
+        }
+    }
+
+    async updatePassword(req, res) {
+        try {
+            const { username, password, oldPassword, newPassword} = req.body;
+            if (!username || !password) {
+                return handleResponse(res, 400, "id and password are required");
+            }
+
+            const student = await this.studentService.find({ username }).exec();
+            if (!student) {
+                return handleResponse(res, 404, "Student not found");
+            }
+            const currentPassword = student.password ? newPassword : password;
+            const toChange = await authService.comparePassword(username, currentPassword);
+            if (toChange) {
+                const encrypted_password = await bcrypt.hash(newPassword, 10);
+                student.password = encrypted_password;
+            } else {
+                return handleResponse(res, 401, "Password is invalid, make sure it is the right one!");
+            }
+            const encrypted_password = await bcrypt.hash(password, 10);
+            student.password = encrypted_password;
+            await student.save();
+            return handleResponse(res, 200, "Password updated", student);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);   
         }
     }
 
@@ -100,4 +144,4 @@ class StudentController {
     }
 }
 
-export const studentService = new StudentController({ studentService: Student });
+export default new StudentController({ studentService: Student });

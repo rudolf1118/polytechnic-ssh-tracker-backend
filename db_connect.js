@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-import config from './config.js';
-const { db_uri } = config;
+import { db_uri } from './config.js';
 
 class DatabaseConnection {
     static instance = null;

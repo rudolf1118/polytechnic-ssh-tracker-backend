@@ -5,6 +5,7 @@
     "connectSSH": "node ./ssh_connection/client.js connect"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "dotenv": "^16.5.0",
     "fs": "^0.0.1-security",
     "mongoose": "^8.13.2",

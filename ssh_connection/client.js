@@ -1,5 +1,6 @@
-const { ssh_host, ssh_username, ssh_password, ssh_port } = require('../config');
-const { Client } = require('ssh2');
+import { ssh_host, ssh_username, ssh_password, ssh_port } from '../config.js';
+import { Client } from 'ssh2';
+
 const connect = process.argv[2];
 
 class SSHConnection {
@@ -37,7 +38,19 @@ class SSHConnection {
             }).connect(this.connectionParams);
         });
     }
-
+    
+    async checkCredentials(username, password) {
+        const sshClient = SSHConnection.getInstance(this.host, username, password, this.port);
+        try {
+            await sshClient.connect();
+            console.log('SSH connection successful');
+            sshClient.disconnect();
+            return true;
+        } catch (err) {
+            console.error('SSH connection failed:', err.message);
+            return false;
+        }
+    }
     async execCommand(command) {
         return new Promise((resolve, reject) => {
             this.client.exec(command, (err, stream) => {
@@ -63,6 +76,5 @@ class SSHConnection {
     }
 }
 
-const instance = SSHConnection.getInstance(ssh_host, ssh_username, ssh_password, ssh_port);
+export const instance = SSHConnection.getInstance(ssh_host, ssh_username, ssh_password, ssh_port);
 if (connect === "connect") instance.connect();
-module.exports = instance;

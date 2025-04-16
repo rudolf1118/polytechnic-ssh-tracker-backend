@@ -1,9 +1,15 @@
 [
   {
+    "username": "a15",
+    "ip": "5.77.194.231",
+    "hostname": "pts/0",
+    "date": "Tue Apr 15 15:26 - 16:41 (01:15)"
+  },
+  {
     "username": "b2",
     "ip": "46.71.239.5",
     "hostname": "pts/0",
-    "date": "Tue Apr 15 13:32 still logged in"
+    "date": "Tue Apr 15 13:32 - 15:17 (01:45)"
   },
   {
     "username": "c1",

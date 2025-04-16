@@ -13,4 +13,4 @@ const Activity = new Schema({
     type: { type: String, default: 'default' },
 });
 
-module.export = model('Activity', Activity);
+export default model('Activity', Activity);

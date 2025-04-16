@@ -1,7 +1,7 @@
 import http from 'http';
 import dbConnection from './db_connect.js';
 import { handleAPIRoutes } from './api/routes.js';
-import { studentService } from './controller/student.controller.js';
+import { studentService } from './controller/controllers.js';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 import { dirname } from 'path';
@@ -24,14 +24,12 @@ const server = http.createServer((req, res) => {
 try {
   (async () => {
     await dbConnection.connect();
-    console.log(studentService)
   }
   )().catch((error) => {
     throw error
   });
   server.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
-    // dbConnection.disconnect();
   });
 } catch (error) {
   console.error('Error starting the server:', error);

@@ -1,10 +1,54 @@
 {
+  "a15": [
+    {
+      "username": "a15",
+      "ip": "5.77.194.231",
+      "hostname": "pts/0",
+      "date": "Tue Apr 15 15:26 - 16:41 (01:15)"
+    },
+    {
+      "username": "a15",
+      "ip": "178.160.245.34",
+      "hostname": "pts/3",
+      "date": "Tue Apr 15 09:02 - 10:15 (01:13)"
+    },
+    {
+      "username": "a15",
+      "ip": "5.77.201.123",
+      "hostname": "pts/2",
+      "date": "Mon Mar 31 18:35 - 20:01 (01:25)"
+    },
+    {
+      "username": "a15",
+      "ip": "5.77.201.123",
+      "hostname": "pts/1",
+      "date": "Sun Mar 30 15:19 - 16:08 (00:48)"
+    },
+    {
+      "username": "a15",
+      "ip": "5.77.201.123",
+      "hostname": "pts/0",
+      "date": "Sun Mar 30 12:29 - 16:08 (03:39)"
+    },
+    {
+      "username": "a15",
+      "ip": "178.160.245.34",
+      "hostname": "pts/7",
+      "date": "Tue Mar 18 10:07 - 10:21 (00:13)"
+    },
+    {
+      "username": "a15",
+      "ip": "178.160.245.34",
+      "hostname": "pts/7",
+      "date": "Tue Mar 18 10:03 - 10:07 (00:04)"
+    }
+  ],
   "b2": [
     {
       "username": "b2",
       "ip": "46.71.239.5",
       "hostname": "pts/0",
-      "date": "Tue Apr 15 13:32 still logged in"
+      "date": "Tue Apr 15 13:32 - 15:17 (01:45)"
     },
     {
       "username": "b2",
@@ -565,44 +609,6 @@
       "ip": "178.160.245.34",
       "hostname": "pts/0",
       "date": "Tue Feb 11 09:50 - 10:04 (00:14)"
-    }
-  ],
-  "a15": [
-    {
-      "username": "a15",
-      "ip": "178.160.245.34",
-      "hostname": "pts/3",
-      "date": "Tue Apr 15 09:02 - 10:15 (01:13)"
-    },
-    {
-      "username": "a15",
-      "ip": "5.77.201.123",
-      "hostname": "pts/2",
-      "date": "Mon Mar 31 18:35 - 20:01 (01:25)"
-    },
-    {
-      "username": "a15",
-      "ip": "5.77.201.123",
-      "hostname": "pts/1",
-      "date": "Sun Mar 30 15:19 - 16:08 (00:48)"
-    },
-    {
-      "username": "a15",
-      "ip": "5.77.201.123",
-      "hostname": "pts/0",
-      "date": "Sun Mar 30 12:29 - 16:08 (03:39)"
-    },
-    {
-      "username": "a15",
-      "ip": "178.160.245.34",
-      "hostname": "pts/7",
-      "date": "Tue Mar 18 10:07 - 10:21 (00:13)"
-    },
-    {
-      "username": "a15",
-      "ip": "178.160.245.34",
-      "hostname": "pts/7",
-      "date": "Tue Mar 18 10:03 - 10:07 (00:04)"
     }
   ],
   "c2": [

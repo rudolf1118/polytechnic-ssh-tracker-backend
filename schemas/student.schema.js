@@ -16,7 +16,7 @@ const Student = new Schema({
     default:[],
     required: true,
     }],
-
+    password: { type: String, required: true, default: "" },
 });
 
 module.exports = model('Student', Student);

@@ -1,42 +1,7 @@
-import SSHConnection from './client.js';
+import { instance as SSHConnection }from './client.js';
 import fs from 'fs';
 import path from 'path';
 const dir = path.dirname(new URL(import.meta.url).pathname);
-console.log(dir);
-// const runSSHCommand = (command) => {
-//     return new Promise((resolve, reject) => {
-
-//         let output = '';
-
-//         sshClient.on('ready', () => {
-//             console.log(`✅ Connected via SSH user ${ssh_username} to ${ssh_host}`);
-
-//             sshClient.exec(command, (err, stream) => {
-//                 if (err) return reject(err);
-
-//                 stream.on('data', (chunk) => {
-//                     output += chunk.toString();
-//                 });
-
-//                 stream.stderr.on('data', (data) => {
-//                     console.error('STDERR:\n' + data.toString());
-//                 });
-
-//                 stream.on('close', (code, signal) => {
-//                     console.log(`🚪 Command finished with code ${code}, signal ${signal}`);
-//                     sshClient.end();
-//                     resolve(output);
-//                 });
-//             });
-//         });
-
-//         sshClient.on('error', (err) => {
-//             reject(err);
-//         });
-
-//         sshClient.connect();
-//     });
-// };
 
 const handleDataToObject = (data) => {
     const lines = data.split(/\r?\n/).filter(Boolean);
@@ -69,6 +34,12 @@ const handleGroupBy = (data, key) => {
     }, {});
 }
 
+export const checkCredentials = async (username, password) => {
+    await SSHConnection.checkCredentials(username, password).catch((err => {  
+        throw err;
+    }));
+}
+
 (async () => {
     try {
         const sshClient = SSHConnection;
@@ -82,9 +53,6 @@ const handleGroupBy = (data, key) => {
         const groupBy = handleGroupBy(parsed, 'username');
         fs.writeFileSync(path.join(dir, '../db_example/test_db_default.json'), JSON.stringify(parsed, null, 2));
         fs.writeFileSync(path.join(dir, '../db_example/test_db_groupedByUsername.json'), JSON.stringify(groupBy, null, 2));
-        // parsed.forEach((item) => {
-        //     console.log(`👤 Username: ${item.username}, 🌐 IP: ${item.ip}, 🖥️ Hostname: ${item.hostname}, 📅 Date: ${item.date}`);
-        // });
     } catch (err) {
         console.error('🔥 Error:', err.message);
     }
