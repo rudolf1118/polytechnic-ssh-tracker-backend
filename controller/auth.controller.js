@@ -1,8 +1,10 @@
-import { handleResponse } from '../utils/response.js';
+import { handleResponse, getUserIdFromToken } from '../utils/response.js';
 import { checkCredentials } from '../ssh_connection/execution.js';
 import { studentService } from './controllers.js';
 import { encrypt, decrypt } from '../utils/crypto.js';
 import tokenGenerator from '../jwt/generate_token.js';
+import { instance as SSHConnection } from '../ssh_connection/client.js';
+
 class AuthController {
 
     constructor(configuration) {
@@ -14,7 +16,7 @@ class AuthController {
             const result = await checkCredentials(username, password);
             console.log(result)
             if (!result) {
-                return {status:401, message: "Invalid username or password"};
+                return {status: 401, message: "Invalid username or password"};
             }
             else if (result) {
                 return { res, status: 200, message: "Password is valid" };
@@ -35,8 +37,7 @@ class AuthController {
                 await studentService.updatePassword(username, password);
                 return true;
             }
-            console.log("aaaaaaaa",student);
-            console.log("bbbbb",password);
+
             if (student.password === password) {
                 return true;
             }
@@ -106,6 +107,33 @@ class AuthController {
             return handleResponse(res, 500, error.message);
         }
     }
+
+    async setConnection(req, res) {
+        try {
+            const { authorization } = req.headers;
+            const token = authorization.split(" ")[1];
+            const user_id = getUserIdFromToken(token);
+            const student = await this.student_service.findById(user_id);
+            if (!student) {
+                return handleResponse(res, 401, "Invalid username or password");
+            }
+            const { username, password: encrypted_password } = student;
+            const real_password = decrypt(encrypted_password.split(":")[1], encrypted_password.split(":")[0]);
+            const ssh_client = SSHConnection;
+            console.log(real_password)
+            ssh_client.updateConnectionParams(username, real_password);
+            const connection = await ssh_client.connect();
+            console.log(connection)
+            if (!connection) {
+                ssh_client.disconnect();
+                return handleResponse(res, 401, "Invalid username or password");
+            }
+        } catch (error) {
+            handleResponse(res, 500, error.message);
+            throw error;
+        }
+    }
+
     async unhandledError(req, res, message) {
         try {
             return handleResponse(res, 500, message);

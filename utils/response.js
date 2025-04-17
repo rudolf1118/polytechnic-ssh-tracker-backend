@@ -1,3 +1,6 @@
+import { jwt_secret } from "../config.js";
+import jwt from "jsonwebtoken";
+
 export const handleResponse = (res, statusCode, message, data = null) => {
     res.statusCode = statusCode;
     res.setHeader('Content-Type', 'application/json');
@@ -27,3 +30,9 @@ export const handleBody = (req) => {
         });
     });
 };
+
+export const getUserIdFromToken = (token) => {
+    const decoded = jwt.verify(token, jwt_secret);
+    const user_id = (decoded).id;
+    return user_id;
+}

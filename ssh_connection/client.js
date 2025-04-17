@@ -20,13 +20,26 @@ class SSHConnection {
         };
     }
 
+    updateConnectionParams(username, password, port = 22, host) {
+        this.host = host || this.host;
+        this.username = username;
+        this.password = password;
+        this.port = port || this.port;
+        this.connectionParams = {
+            host: this.host,
+            port: this.port,
+            username: this.username,
+            password: this.password,
+        };
+    }
+
     static getInstance(host, username, password, port = 22) {
         if (!this.instance) {
             SSHConnection.instance = new SSHConnection(host, username, password, port);
         }
         return SSHConnection.instance;
     }
-
+    // TODO: check what is proble of /api/auth/connect
     connect() {
         return new Promise((resolve, reject) => {
             this.client.on('ready', () => {

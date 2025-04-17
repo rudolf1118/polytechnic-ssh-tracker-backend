@@ -43,8 +43,11 @@ const handleAuthRoutes = async (req, res, conf) => {
     const parsedUrl = parse(action, true);
     const { pathname } = parsedUrl;
     const { method } = req;
-    // * action example search?id=123
+
     if (method === 'GET') {
+        if (pathname === 'connect') {
+            return await authService.setConnection(req, res);
+        }
     }
     else if (method === "POST") {
         const body = await handleBody(req);

@@ -40,7 +40,7 @@ export const checkCredentials = async (username, password) => {
     }));
 }
 
-export const connectAndExecuteSSH = async () => {
+export const connectAndExecuteSSH = async (user_config) => {
     try {
         const sshClient = SSHConnection;
         await sshClient.connect();
@@ -54,6 +54,6 @@ export const connectAndExecuteSSH = async () => {
         fs.writeFileSync(path.join(dir, '../db_example/test_db_default.json'), JSON.stringify(parsed, null, 2));
         fs.writeFileSync(path.join(dir, '../db_example/test_db_groupedByUsername.json'), JSON.stringify(groupBy, null, 2));
     } catch (err) {
-        console.error('🔥 Error:', err.message);
+        console.error('Error:', err.message);
     }
 }
