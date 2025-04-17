@@ -10,30 +10,52 @@ const parameter = process.argv[2]
 export const activityList = async (filter) => {
     try {
         await initializeServerDB();
-        const {username} = filter;
-        const list = await activityService.activityService.find(username ? { username} : null).exec();
+        const { username } = filter || {};
+        const filterCriteria = {};
+        if (filter) {
+            if (typeof filter === 'string') {
+            const filters = filter.includes('&') ? filter.split('&') : [filter];
+            if (filters.length > 1) {
+                filterCriteria.$and = filters.map(pair => {
+                    const [key, value] = pair.split('=');
+                    if (key && value) {
+                        return { [key]: value };
+                    }
+                    return null;
+                }).filter(Boolean);
+            } else {
+                filters.forEach(pair => {
+                    const [key, value] = pair.split('=');
+                    if (key && value) {
+                        filterCriteria[key] = value;
+                    }
+                });
+            }
+            } else if (typeof filter === 'object') {
+            Object.assign(filterCriteria, filter);
+            }
+        }
+        const list = await activityService.activityService.find(Object.keys(filterCriteria).length ? filterCriteria : null).exec();
         // console.table(list)
         let count = 0;
         list.forEach((student) => {
             count++;
             student._doc.activities.sort((a, b) => {
-                const timeA = a.match(/\((\d{2}):(\d{2})\)/);
-                const timeB = b.match(/\((\d{2}):(\d{2})\)/);
-                const minutesA = parseInt(timeA[1]) * 60 + parseInt(timeA[2]);
-                const minutesB = parseInt(timeB[1]) * 60 + parseInt(timeB[2]);
+                const timeA = typeof a === 'string' ? a.match(/\((\d{2}):(\d{2})\)/) : null;
+                const timeB = typeof b === 'string' ? b.match(/\((\d{2}):(\d{2})\)/) : null;
+                const minutesA = timeA ? parseInt(timeA[1]) * 60 + parseInt(timeA[2]) : 0;
+                const minutesB = timeB ? parseInt(timeB[1]) * 60 + parseInt(timeB[2]) : 0;
                 return minutesA - minutesB;
             });
             console.log(
             `\x1b[36mID:\x1b[0m ${student._doc._id.buffer.toString('hex')}\n` +
-            `\x1b[33mFirst Name (EN):\x1b[0m ${student._doc.firstNameEN}\n` +
-            `\x1b[33mLast Name (EN):\x1b[0m ${student._doc.lastNameEN}\n` +
-            `\x1b[32mFirst Name (AM):\x1b[0m ${student._doc.firstNameAM}\n` +
-            `\x1b[32mLast Name (AM):\x1b[0m ${student._doc.lastNameAM}\n` +
-            `\x1b[35mUsername:\x1b[0m ${student._doc.username}\n` +
+            `\x1b[33mUsername:\x1b[0m ${student._doc.username}\n` +
+            `\x1b[33mFirst Name (EN):\x1b[0m ${student._doc.firstName}\n` +
+            `\x1b[32mLast Name (EN):\x1b[0m ${student._doc.lastName}\n` +
+            `\x1b[33mStudent ID:\x1b[0m ${student._doc.studentId}\n` +
             `\x1b[34mCreated At:\x1b[0m ${student._doc.createdAt}\n` +
-            `\x1b[31mModified At:\x1b[0m ${student._doc.modifyAt}\n` +
-            `\x1b[33mActivities:\x1b[0m ${student._doc.activities}\n` +
-            `\x1b[35mGroup:\x1b[0m ${student._doc.group}\n` +
+            `\x1b[31mLast Updated At:\x1b[0m ${student._doc.lastUpdatedAt}\n` +
+            `\x1b[32mDuration Of Activity:\x1b[0m ${student._doc.durationOfActivity}\n` +
             `\x1b[36m----------------------------------------\x1b[0m`
             );
         });
@@ -49,7 +71,7 @@ export const activityList = async (filter) => {
 if (!parameter) {
     await activityList()
 };
-if (parameter.includes('username') ) {
+if (parameter.includes('=')) {
     const filterToPass = parameter.split('=');
     const filterObj = { [filterToPass[0].toString()]: filterToPass[1] };
     await activityList(filterObj);
@@ -59,6 +81,7 @@ if (parameter === "addActivities") {
     const data = fs.readFileSync(path.join(__dirname, '../db_example/test_db_groupedByUsername.json'), 'utf-8')
     if (data) {
         const parsed = JSON.parse(data);
+        console.log(parsed)
         const students = await studentService.studentService.find().exec();
         const result = await activityService.createActivityFromScratch(students, parsed);
     }
@@ -68,6 +91,5 @@ if (parameter === 'updateActivities') {
         const students = await studentService.studentService.find().exec();
         for (const student of students) {
             const result = await activityService.updateActivityOfStudents(student);
-            console.log(result)
         }
 }

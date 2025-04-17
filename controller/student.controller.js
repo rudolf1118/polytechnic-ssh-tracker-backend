@@ -1,6 +1,9 @@
 import Student from '../schemas/student.schema.js';
 import { handleResponse } from '../utils/response.js';
 import { authService } from './controllers.js';
+import fs from 'fs';
+import path from 'path';
+
 class StudentController {
 
     constructor(configuration) {
@@ -9,7 +12,7 @@ class StudentController {
 
     async getStudents(req, res) {
         try {
-            const students = await Student.find();
+            const students = await this.studentService.find();
             if (!students) {
                 return handleResponse(res, 404, "No students found");
             }

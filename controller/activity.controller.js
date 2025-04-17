@@ -1,91 +1,132 @@
 import Activity from '../schemas/activity.schema.js';
 import { studentService } from './controllers.js';
 import { formatDuration } from '../utils/helper.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import { handleResponse } from '../utils/response.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const filePath = path.join(__dirname, '../db_example/students.json');
+
 class ActivityController {
-    
     constructor(configuration) {
         this.activityService = configuration.activityService;
     }
 
     async getActivities(req, res) {
         try {
-        const activities = await this.activityService.getActivities();
-        res.status(200).json(activities);
+            const activities = await this.activityService.find();
+            if (!activities) {
+                return handleResponse(res, 404, "No activities found");
+            }
+            return handleResponse(res, 200, "Activities found", activities);
         } catch (error) {
-        res.status(500).json({ message: error.message });
+            return handleResponse(res, 500, error.message);
         }
     }
-    
+
+    async getActivity(req, res, key) {
+        try {
+            const value = req?.params[key];
+            if (!value) throw new Error(`${key} is required`);
+
+            const query = key === 'id'
+                ? this.activityService.findById(value)
+                : this.activityService.find({ [key]: value }).exec();
+
+            const activity = await query;
+
+            if (!activity) {
+                return handleResponse(res, 404, "Activity not found");
+            }
+
+            return handleResponse(res, 200, "Activity found", activity);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
+        }
+    }
+
+    async getActivityByNameSurname(req, res) {
+        try {
+            const { firstName, lastName } = req.params;
+            if (!firstName || !lastName) throw new Error("firstName and lastName are required");
+
+            const activity = await this.activityService.find({ firstName, lastName }).exec();
+            if (!activity) {
+                return handleResponse(res, 404, "Activity not found");
+            }
+
+            return handleResponse(res, 200, "Activity found", activity);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
+        }
+    }
+
     async createActivity(req, res) {
         try {
-        const activity = await this.activityService.createActivity(req.body);
-        res.status(201).json(activity);
+            const activity = await this.activityService.createActivity(req.body);
+            res.status(201).json(activity);
         } catch (error) {
-        res.status(500).json({ message: error.message });
+            res.status(500).json({ message: error.message });
         }
     }
-    // * For filling DB
 
-    /*
-        activities: [{ 
-        ip: { type: String, required: true },
-        hostname: { type: String, required: true },
-        date: { type: String, required: true },
-        createdAt: { type: Date, default: Date.now },
-        modifyAt: { type: Date, default: Date.now },
-        rating: { type: Number, default: 0 },
-        description: { type: String, default: '' },
-        status: { type: String, default: 'active' },
-        type: { type: String, default: 'default' },
-    }],
-    {
-    "username": "c1",
-    "ip": "178.160.245.34",
-    "hostname": "pts/11",
-    "date": "Tue Apr 15 09:45 - 10:12 (00:27)"
-    },
-    */
+    // * For filling DB
     async createActivityFromScratch(students, activities) {
         try {
+            const students_ = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
             const student_usernames = students.map((student) => student?.username);
-            let wholeDuration = 0;
             let userActivity = [];
-            console.log(student_usernames.length)
-            student_usernames.forEach(async (name)=>{
+
+            student_usernames.forEach(async (name) => {
                 const activitiesOfStudent = activities[name];
-                if (!activitiesOfStudent) return ;
+                if (!activitiesOfStudent) return;
+
                 let duration = 0;
                 activitiesOfStudent.forEach((activity) => {
                     const activity_toDB = {};
                     const { ip, hostname, date } = activity;
+
                     activity_toDB.ip = ip;
                     activity_toDB.hostname = hostname;
                     activity_toDB.date = date;
+
                     const timeMatch = date.match(/\((\d+):(\d+)\)/);
                     if (timeMatch) {
                         const [_, minutes, seconds] = timeMatch.map(Number);
                         duration += minutes * 60 + seconds;
                     }
+
                     activity_toDB.duration = formatDuration(duration) || duration;
                     userActivity.push(activity_toDB);
                 });
+
+                const that_student = students_.find((student) => student.id === name);
                 const create = new Activity({
                     username: name,
+                    firstName: that_student.firstNameEN,
+                    lastName: that_student.lastNameEN,
                     studentId: students.find((student) => student.username === name)._id,
                     createdAt: new Date(),
                     lastUpdatedAt: new Date(),
                     durationOfActivity: formatDuration(duration) || duration,
                     activities: userActivity
                 });
-                console.log(create);
+
                 await create.save();
+
                 const student = await studentService.studentService.findOneAndUpdate(
                     { username: name },
                     { $push: { activities: create._id } },
                     { new: true }
                 ).exec();
+
+                console.log(create, student);
             });
-            console.log("saved");
+
+            console.log("Saved");
         } catch (error) {
             throw error;
         }
@@ -94,31 +135,32 @@ class ActivityController {
     async updateActivityOfStudents(student) {
         try {
             const { username } = student;
-            console.log(student)
             const existingActivity = await this.activityService.findOne({ username });
+
             if (!existingActivity) {
                 return {
                     status: 404,
                     message: "Activity not found"
                 };
             }
+
             const updatedActivityOfStudent = await studentService.studentService.findOneAndUpdate(
                 { username },
-                { $push: { activities: { _id: existingActivity._id } } },
-                { $set: { modifyAt: new Date() } },
+                { $set: { activities: [] } }, // Set the activities array to an empty array
                 { new: true }
             ).exec();
-            console.log(updatedActivity)
-            if (!updatedActivity) {
+
+            if (!updatedActivityOfStudent) {
                 return {
                     status: 500,
                     message: "Activity not updated"
                 };
             }
+
             return {
                 status: 200,
                 message: "Activity updated successfully",
-                data: updatedActivity
+                data: updatedActivityOfStudent
             };
         } catch (error) {
             console.error("Error updating activity:", error.message);
@@ -128,6 +170,42 @@ class ActivityController {
             };
         }
     }
+
+    async updateActivity(req, res) {
+        try {
+            const { username, id } = req.body;
+            const existingActivity = id
+                ? await this.activityService.findById(id)
+                : await this.activityService.findOne({ username });
+
+            if (!existingActivity) {
+                return handleResponse(res, 404, "Activity not found");
+            }
+
+            const updatedActivityOfStudent = await studentService.studentService.findOneAndUpdate(
+                { username: existingActivity.username },
+                { $set: { activities: [] } }, // Set the activities array to an empty array
+                { new: true }
+            ).exec();
+
+            if (!updatedActivityOfStudent) {
+                return handleResponse(res, 500, "Activity not updated");
+            }
+
+            return handleResponse(res, 200, "Activity updated successfully", updatedActivityOfStudent);
+        } catch (error) {
+            console.error("Error updating activity:", error.message);
+            return handleResponse(res, 500, "An error occurred while updating the activity");
+        }
+    }
+
+    async unhandledError(req, res, message) {
+        try {
+            return handleResponse(res, 500, message);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
+        }
+    }
 }
 
-export default new ActivityController({activityService: Activity});
+export default new ActivityController({ activityService: Activity });

@@ -1,6 +1,8 @@
 import { Schema, model } from 'mongoose';
 const Activity = new Schema({
     username: { type: String, required: true },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
     studentId: { type: Schema.Types.ObjectId, required: true },
     createdAt: { type: Date, default: Date.now },
     lastUpdatedAt: { type: Date, default: Date.now },

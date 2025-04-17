@@ -1,4 +1,4 @@
-import { studentService, authService } from '../controller/controllers.js';
+import { studentService, authService, activityService } from '../controller/controllers.js';
 import { parse } from 'url';
 import { handleBody } from '../utils/response.js';
 
@@ -31,10 +31,11 @@ const handleStudentsRoutes = async (req, res, conf) => {
             const student = req.body;
             return studentService.createStudent(student);
         }
-        else if (pathname === 'update') {
-            const student = req.body;
-            return studentService.updateStudent(student);
-        }
+        // * not implemented yet
+        // else if (pathname === 'update') {
+        //     const student = req.body;
+        //     return studentService.updateStudent(student);
+        // }
     }
 }
 
@@ -57,6 +58,43 @@ const handleAuthRoutes = async (req, res, conf) => {
         }
         else if (pathname === 'updatePassword') {
             return await studentService.updatePassword(req, res);
+        }
+    }
+}
+
+const handleActivityRoutes = async (req, res, conf) => { 
+    const { action, query } = conf;
+    const parsedUrl = parse(action, true);
+    const { method } = req;
+    const { pathname } = parsedUrl;
+    console.log(query)
+    // * action example search?id=123
+    if (method === 'GET') {
+        if (pathname === 'search' && query) {
+            const { firstName, lastName, username, id } = query;
+            if (firstName && lastName) {
+                return activityService.getActivityByNameSurname({ params: { firstName, lastName } }, res);
+            }
+            else if (username) {
+                return activityService.getActivity({ params: { username } } , res, 'username');
+            }
+            else if (id) {
+                return activityService.getActivity({ params: { id } }, res, 'id');
+            }
+            else {
+                return activityService.unhandledError(req, res, 'id or username is required');
+            }
+        }
+    }
+    else if (method === "POST") {
+        if (pathname === 'create') {
+            const student = req.body;
+            return studentService.createStudent(student);
+        }
+        else if (pathname === 'update') {
+            const body = await handleBody(req);
+            req.body = body;
+            return activityService.updateActivity(req, res);
         }
     }
 }
