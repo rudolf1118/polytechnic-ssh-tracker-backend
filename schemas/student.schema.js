@@ -1,4 +1,4 @@
-const { Schema, model } =  require('mongoose');
+import { Schema, model } from 'mongoose';
 
 const Student = new Schema({
     username: { type: String, required: true },
@@ -8,15 +8,13 @@ const Student = new Schema({
     lastNameEN: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     modifyAt: { type: Date, default: Date.now },
-    activities: [{
-    type: [{
-        type: Schema.Types.ObjectId,
+    activities: {
+        type: [String],
         ref: 'Activity',
-    }],
-    default:[],
-    required: true,
-    }],
-    password: { type: String, required: true, default: "" },
+        default: [],
+    },
+    password: { type: String, default: "" },
+    group: { type: String, enum: ['lab-1', 'lab-2', 'lab-3', 'lab-4'], required: true, default: ""},
 });
 
-module.exports = model('Student', Student);
+export default model('Student', Student);

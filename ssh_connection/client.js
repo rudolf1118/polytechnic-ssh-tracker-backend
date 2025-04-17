@@ -39,7 +39,7 @@ class SSHConnection {
         }
         return SSHConnection.instance;
     }
-    // TODO: check what is proble of /api/auth/connect
+    // TODO: check what is problem of /api/auth/connect
     connect() {
         return new Promise((resolve, reject) => {
             this.client.on('ready', () => {

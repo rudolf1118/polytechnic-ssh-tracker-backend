@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 import { dirname } from 'path';
 const dir = dirname(__filename);
+const caller = process.argv[1];
 const PORT = 3000;
 
 const server = http.createServer((req, res) => {
@@ -25,18 +26,33 @@ const server = http.createServer((req, res) => {
         }));
 });
 
-try {
-  (async () => {
+export const initializeServerDB = async () => {
+  try {
     await dbConnection.connect();
-  })().catch((error) => {
+  } catch (error) {
     throw error;
-  });
+  }
+};
 
-  server.listen(PORT, () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
-  });
-} catch (error) {
-    console.error('Error starting the server:', error);
-    dbConnection.disconnect();
-    process.exit(1);
+export const closeServerDB = async () => {
+  try {
+    await dbConnection.disconnect();
+  } catch (error) {
+    throw error;
+  }
+}
+
+if (import.meta.url === 'file://' + caller) {
+  try {
+
+    await initializeServerDB();
+
+    server.listen(PORT, () => {
+      console.log(`Server is running at http://localhost:${PORT}`);
+    });
+  } catch (error) {
+      console.error('Error starting the server:', error);
+      dbConnection.disconnect();
+      process.exit(1);
+  }
 }

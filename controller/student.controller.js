@@ -4,7 +4,6 @@ import { authService } from './controllers.js';
 class StudentController {
 
     constructor(configuration) {
-        console.log(configuration)
         this.studentService = configuration.studentService;
     }
 
@@ -131,7 +130,9 @@ class StudentController {
                 firstNameEN: student.firstNameEN,
                 lastNameEN: student.lastNameEN,
                 createdAt: student.createdAt,
-                modifyAt: student.modifyAt,
+                lastUpdatedAt: student.modifyAt,
+                password: "",
+                group: student.group,
                 activities: []
             });
 
@@ -140,6 +141,44 @@ class StudentController {
             console.log("saved");
         } catch (error) {
             throw new Error(`Error creating student: ${error.message}`);
+        }
+    }
+
+    async updateStudentsGroup(student) {
+        try {
+            const { id } = student;
+            console.log("OLD", student);
+            const existingStudent = await this.studentService.findOne({ username:id }).exec();
+            console.log(existingStudent)
+            if (!existingStudent) {
+                return {
+                    status: 404,
+                    message: "Student not found"
+                };
+            }
+            const updatedStudent = await this.studentService.findOneAndUpdate(
+            { username:id },
+            { $set: { group: student.group } },
+            { new: true } // Return the updated document
+            ).exec();
+            console.log(updatedStudent);
+            if (!updatedStudent) {
+            return {
+                status: 500,
+                message: "Student not updated"
+            };
+            }
+            return {
+            status: 200,
+            message: "Student updated successfully",
+            data: updatedStudent
+            };
+        } catch (error) {
+            console.error("Error updating student group:", error.message);
+            return {
+            status: 500,
+            message: "An error occurred while updating the student group"
+            };
         }
     }
 }

@@ -1,7 +1,10 @@
 {
+  "type": "module",
   "scripts": {
     "build": "node ./ssh_connection/build.js",
     "start": "nodemon server.js",
+    "getStudentList": "node ./cmd_log/student_list.js",
+    "getActivityList": "node ./cmd_log/activity_list.js",
     "connectSSH": "node ./ssh_connection/client.js connect"
   },
   "dependencies": {
@@ -10,6 +13,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.13.2",
     "nodemon": "^3.1.9",
+    "ora": "^8.2.0",
     "path": "^0.12.7",
     "ssh2": "^1.16.0"
   }
