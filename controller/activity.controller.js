@@ -146,7 +146,7 @@ class ActivityController {
 
             const updatedActivityOfStudent = await studentService.studentService.findOneAndUpdate(
                 { username },
-                { $set: { activities: [] } }, // Set the activities array to an empty array
+                { $push: { activities: existingActivity?.id } }, // Set the activities array to an empty array
                 { new: true }
             ).exec();
 

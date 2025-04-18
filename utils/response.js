@@ -1,10 +1,21 @@
 import { jwt_secret } from "../config.js";
 import jwt from "jsonwebtoken";
 
-export const handleResponse = (res, statusCode, message, data = null) => {
+export const handleResponse = (res, statusCode, message, data = null, end=true) => {
     res.statusCode = statusCode;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ message, data }));
+    const response_data = {};
+    if (message) {
+        response_data.message = message;
+    }
+    if (data) {
+        response_data.data = data;
+    }
+    if (statusCode >= 400) {
+        response_data.error = message;
+    }
+    res.write(JSON.stringify(response_data));
+    end && res.end();
     return res;
 }
 

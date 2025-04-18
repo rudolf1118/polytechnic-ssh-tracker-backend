@@ -4,12 +4,13 @@ import { studentService } from './controllers.js';
 import { encrypt, decrypt } from '../utils/crypto.js';
 import tokenGenerator from '../jwt/generate_token.js';
 import { instance as SSHConnection } from '../ssh_connection/client.js';
+import jwt from 'jsonwebtoken';
+import { jwt_secret } from '../config.js';
 
 class AuthController {
 
     constructor(configuration) {
-        this.authService = configuration.authService;
-        this.student_service = studentService.studentService;
+        this.student_service = configuration.studentService;
     }
     async comparePassword (username, password, res) {
         try {
@@ -88,7 +89,6 @@ class AuthController {
                 return handleResponse(res, 401, "Invalid username or password");
             }
             if (user.password && user.password !== encrypted_requested_password)  {
-                console.log("ASDSADAS")
                 return handleResponse(res, 401, "Invalid username or password");
             }
             else {
@@ -101,7 +101,7 @@ class AuthController {
                 console.log(token)
                 return handleResponse(res, 401, "Invalid username or password");
             }
-            console.log("im here2")
+
             return handleResponse(res, 200, "Login successful", token);
         } catch (error) {
             return handleResponse(res, 500, error.message);
@@ -113,7 +113,9 @@ class AuthController {
             const { authorization } = req.headers;
             const token = authorization.split(" ")[1];
             const user_id = getUserIdFromToken(token);
+            console.log(user_id)
             const student = await this.student_service.findById(user_id);
+            console.log(student)
             if (!student) {
                 return handleResponse(res, 401, "Invalid username or password");
             }
@@ -122,15 +124,68 @@ class AuthController {
             const ssh_client = SSHConnection;
             console.log(real_password)
             ssh_client.updateConnectionParams(username, real_password);
-            const connection = await ssh_client.connect();
-            console.log(connection)
-            if (!connection) {
-                ssh_client.disconnect();
+            await ssh_client.connect().catch((error) =>{
+                throw {status: 404, message: error.message};
+            })
+            return handleResponse(res, 200, "Connection successful");
+        } catch (error) {
+            handleResponse(res, error.status || 500, error.message);
+            throw error;
+        }
+    }
+
+    async disconnect(req, res) {
+        try {
+            const { authorization } = req.headers;
+            const token = authorization.split(" ")[1];
+            const user_id = getUserIdFromToken(token);
+            const student = await this.student_service.findById(user_id);
+            if (!student) {
                 return handleResponse(res, 401, "Invalid username or password");
             }
+            const ssh_client = SSHConnection;
+            ssh_client.disconnect();
+            return handleResponse(res, 200, "Disconnected successfully");
         } catch (error) {
-            handleResponse(res, 500, error.message);
+            handleResponse(res, error.status || 500, error.message);
             throw error;
+        }
+    }
+
+    async checkToken(req, res, end = true) {
+        try {
+            const { authorization } = req.headers;
+            if (!authorization) return handleResponse(res, 401, "Authorization header is required", null,  end);
+            const token = authorization.split(" ")[1];
+            const user_id = getUserIdFromToken(token);
+            if (!user_id) return handleResponse(res, 401, "Invalid token", null, end);
+            const student = await this.student_service.findById(user_id);
+            if (!student) return handleResponse(res, 401, "Invalid token", null, end);
+            const decoded = jwt.verify(token, jwt_secret);
+            if (!decoded) return handleResponse(res, 401, "Invalid token");
+            if (decoded.id !== student._id.toString()) return handleResponse(res, 401, "Invalid token", null, end);
+            return handleResponse(res, 200, "Token is valid", student, end);
+        } catch (error) {
+            return handleResponse(res, 500, error.message, null, end);
+        }
+    }
+
+    async checkToken_(req, res) {
+        try {
+            const { authorization } = req.headers;
+            if (!authorization) return { status: 401, message: "Authorization header is required"};
+            const token = authorization.split(" ")[1];
+            const user_id = getUserIdFromToken(token);
+            if (!user_id) return { status: 401, message: "Invalid token"};
+            const student = await this.student_service.findById(user_id);
+            if (!student) return { status: 401, message: "Invalid token"};
+            const decoded = jwt.verify(token, jwt_secret);
+            if (!decoded) return { status: 401, message: "Invalid token" };
+            if (decoded.id !== student._id.toString()) return { status: 401, message: "Invalid token"};
+            return {res, status: 200, message: "Token is valid", student};
+        } catch (error) {
+            return { status: 500, message: error.message };
+
         }
     }
 
@@ -143,4 +198,4 @@ class AuthController {
     }
 }
 
-export default new AuthController({});
+export default new AuthController({studentService: studentService.studentService});

@@ -1,13 +1,14 @@
 import { studentService, authService, activityService } from '../controller/controllers.js';
 import { parse } from 'url';
 import { handleBody } from '../utils/response.js';
+import decorator from '../utils/decorator.js';
 
 const handleStudentsRoutes = async (req, res, conf) => { 
     const { action, query } = conf;
     const parsedUrl = parse(action, true);
     const { method } = req;
     const { pathname } = parsedUrl;
-    console.log(query)
+
     // * action example search?id=123
     if (method === 'GET') {
         if (pathname === 'search' && query) {
@@ -47,7 +48,10 @@ const handleAuthRoutes = async (req, res, conf) => {
 
     if (method === 'GET') {
         if (pathname === 'connect') {
-            return await authService.setConnection(req, res);
+            return await decorator.withAuth(req, res, authService.setConnection.bind(authService));
+        }
+        if (pathname === 'disconnect') {
+            return await decorator.withAuth(req, res, authService.disconnect.bind(authService));
         }
     }
     else if (method === "POST") {
@@ -57,7 +61,8 @@ const handleAuthRoutes = async (req, res, conf) => {
             return await authService.login(req, res);
         }
         else if (pathname === 'updatePassword') {
-            return await studentService.updatePassword(req, res);
+            // return await studentService.updatePassword(req, res);
+            return await decorator.withAuth(req, res, studentService.updatePassword);
         }
     }
 }
@@ -111,7 +116,7 @@ export const handleAPIRoutes = (req, res) => {
         case "students":
             return handleStudentsRoutes(req, res, {action, query});
         case "activities":
-            return handleActivitiesRoutes(req, res, {action, query});
+            return handleActivityRoutes(req, res, {action, query});
         case "auth":
             return handleAuthRoutes(req, res, {action, query});
         default:
