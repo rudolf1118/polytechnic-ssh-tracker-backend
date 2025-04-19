@@ -81,12 +81,18 @@ if (parameter === "addActivities") {
     const data = fs.readFileSync(path.join(__dirname, '../db_example/test_db_groupedByUsername.json'), 'utf-8')
     if (data) {
         const parsed = JSON.parse(data);
-        console.log(parsed)
         const students = await studentService.studentService.find().exec();
         const result = await activityService.createActivityFromScratch(students, parsed);
     }
 }
 if (parameter === 'updateActivities') {
+    await initializeServerDB();
+        const students = await studentService.studentService.find().exec();
+        for (const student of students) {
+            const result = await activityService.updateActivityOfStudents(student);
+        }
+}
+if (parameter === 'updateActivities_') {
     await initializeServerDB();
         const students = await studentService.studentService.find().exec();
         for (const student of students) {

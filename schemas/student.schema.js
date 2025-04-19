@@ -9,9 +9,9 @@ const Student = new Schema({
     createdAt: { type: Date, default: Date.now },
     modifyAt: { type: Date, default: Date.now },
     activities: {
-        type: [String],
+        type: String,
         ref: 'Activity',
-        default: [],
+        default: "",
     },
     password: { type: String, default: "" },
     group: { type: String, enum: ['lab-1', 'lab-2', 'lab-3', 'lab-4'], required: true, default: ""},

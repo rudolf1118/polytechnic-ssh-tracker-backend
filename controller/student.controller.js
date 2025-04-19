@@ -1,6 +1,6 @@
 import Student from '../schemas/student.schema.js';
 import { handleResponse } from '../utils/response.js';
-import { authService } from './controllers.js';
+import { authService, activityService } from './controllers.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -146,7 +146,36 @@ class StudentController {
             throw new Error(`Error creating student: ${error.message}`);
         }
     }
+    async updateActivitiesOfStudent__(student) {
+        try {
+            const { username, activities, id } = student;
+            const activitiesFromDB = await activityService.activityService.find({ studentId: id }).exec();
+            
+            const { id: _id } = activitiesFromDB[0];
+            const updatedStudent = await this.studentService.findOneAndUpdate(
+                { username },
+                { $set: { activities: _id } },
+                { new: true }
+            ).exec();
 
+            if (!updatedStudent) {
+                throw new Error("Failed to update student activities");
+            }
+
+            return {
+                status: 200,
+                message: "Student activities updated successfully",
+                data: updatedStudent
+            };
+        } catch (error) {
+            console.error("Error updating student activities:", error.message);
+            return {
+                status: 500,
+                message: "An error occurred while updating the student activities"
+            };
+            
+        }
+    }
     async updateStudentsGroup(student) {
         try {
             const { id } = student;

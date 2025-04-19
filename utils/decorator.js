@@ -5,17 +5,15 @@ class Decorator {
         this.decorators = [];
     }
     
-    async withAuth(req, res,handler) {
+    async withAuth(req, res, handler) {
             try {
                 await authService.checkToken_(req, res, false);
                 return (await handler(req, res));
             } catch (error) {
-                console.error(error);
-                return {
-                    status: 500,
-                    message: "Something went wrong",
-                    error: error.message
-                };
+                if (error) {
+                    return handleResponse(res, 401, error.message);
+                }
+                return handleResponse(res, 500, "Something went wrong");
             }
     }
 }

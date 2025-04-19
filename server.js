@@ -2,6 +2,7 @@ import http from 'http';
 import dbConnection from './db_connect.js';
 import { handleAPIRoutes } from './api/routes.js';
 import { studentService } from './controller/controllers.js';
+import ora from 'ora';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 import { dirname } from 'path';
@@ -28,7 +29,14 @@ const server = http.createServer((req, res) => {
 
 export const initializeServerDB = async () => {
   try {
-    await dbConnection.connect();
+    const spinner = ora('Connecting to the database...').start();
+    try {
+      await dbConnection.connect();
+      spinner.succeed('Database connected successfully.');
+    } catch (error) {
+      spinner.fail('Failed to connect to the database.');
+      throw error;
+    }
   } catch (error) {
     throw error;
   }

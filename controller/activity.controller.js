@@ -1,10 +1,11 @@
 import Activity from '../schemas/activity.schema.js';
 import { studentService } from './controllers.js';
-import { formatDuration } from '../utils/helper.js';
+import { formatDuration, parseLastStringToEndDate, addDurationToExisted } from '../utils/helper.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { handleResponse } from '../utils/response.js';
+import { connectAndExecuteSSH } from '../ssh_connection/execution.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,6 +14,7 @@ const filePath = path.join(__dirname, '../db_example/students.json');
 class ActivityController {
     constructor(configuration) {
         this.activityService = configuration.activityService;
+        this.studentService = configuration.studentService;
     }
 
     async getActivities(req, res) {
@@ -78,9 +80,10 @@ class ActivityController {
         try {
             const students_ = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
             const student_usernames = students.map((student) => student?.username);
-            let userActivity = [];
 
             student_usernames.forEach(async (name) => {
+                let lastOnline = "";
+                let userActivity = [];
                 const activitiesOfStudent = activities[name];
                 if (!activitiesOfStudent) return;
 
@@ -100,6 +103,7 @@ class ActivityController {
                     }
 
                     activity_toDB.duration = formatDuration(duration) || duration;
+                    if (!lastOnline || parseLastStringToEndDate(date) > lastOnline) lastOnline = parseLastStringToEndDate(date);
                     userActivity.push(activity_toDB);
                 });
 
@@ -112,7 +116,8 @@ class ActivityController {
                     createdAt: new Date(),
                     lastUpdatedAt: new Date(),
                     durationOfActivity: formatDuration(duration) || duration,
-                    activities: userActivity
+                    activities: userActivity,
+                    lastOnline,
                 });
 
                 await create.save();
@@ -143,10 +148,11 @@ class ActivityController {
                     message: "Activity not found"
                 };
             }
-
+            
             const updatedActivityOfStudent = await studentService.studentService.findOneAndUpdate(
                 { username },
-                { $push: { activities: existingActivity?.id } }, // Set the activities array to an empty array
+                { $push: { activities: existingActivity?.id } }, 
+                { $set: {modifyAt: new Date() } },
                 { new: true }
             ).exec();
 
@@ -168,6 +174,152 @@ class ActivityController {
                 status: 500,
                 message: "An error occurred while updating the activity"
             };
+        }
+    }
+
+    async fetchActivityAndUpdate(req, res) {
+        try {
+            const { username, password } = req?.body || {};
+            if (!username || !password) {
+                return handleResponse(res, 400, "Credentials are required");
+            }
+            let updated_count = 0;
+            const { groupedBy } = await connectAndExecuteSSH({ username, password });
+    
+            const activities = await this.activityService.find().exec();
+            console.log(activities)
+            if (!activities) {
+                return handleResponse(res, 404, "Activities not found");
+            }
+    
+            for (const activity_ of activities) {
+                const studentUsername = activity_.username;
+                const lastUpdatedAt = activity_.lastUpdatedAt;
+            
+                const activitiesOfStudent = groupedBy[studentUsername];
+                if (!activitiesOfStudent) continue;
+            
+                let totalNewDuration = 0;
+                let lastOnline;
+                const newActivities = [];
+            
+                for (const activity of activitiesOfStudent) {
+                    if (!lastOnline || parseLastStringToEndDate(activity.date) > lastOnline) lastOnline = parseLastStringToEndDate(activity.date);
+                    if (parseLastStringToEndDate(activity.date) < lastUpdatedAt) continue;
+            
+                    const { ip, hostname, date } = activity;
+                    const activity_toDB = { ip, hostname, date };
+            
+                    const timeMatch = date.match(/\((\d+):(\d+)\)/);
+                    if (timeMatch) {
+                        const [, minutes, seconds] = timeMatch.map(Number);
+                        const duration = minutes * 60 + seconds;
+                        activity_toDB.duration = formatDuration(duration);
+                        totalNewDuration += duration;
+                    }
+            
+                    newActivities.push(activity_toDB);
+                }
+            
+                if (newActivities.length === 0) continue;
+            
+                const updatedDuration = addDurationToExisted(
+                    activity_.durationOfActivity || "00:00:00",
+                    formatDuration(totalNewDuration)
+                );
+            
+                const updated = await this.activityService.findOneAndUpdate(
+                    { username: studentUsername },
+                    {
+                        $set: { durationOfActivity: updatedDuration,  lastOnline: lastOnline },
+                        $push: { activities: { $each: newActivities } }
+                    },
+                    { new: true }
+                ).exec();
+                updated_count++;
+            
+                if (updated.activities?.length > 300) {
+                    updated.activities.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    updated.activities = updated.activities.slice(-150);
+                    await updated.save();
+                }
+            }
+    
+            return handleResponse(res, 200, `Activities updated successfully, updated users count: ${updated_count}`);
+        } catch (error) {
+            console.error("Error fetching activity:", error.message);
+            return handleResponse(res, error?.status || 500, error?.message || "Something went wrong");
+        }
+    }
+
+    async fetchActivityAndUpdate_cmd(req, res) {
+        try {
+            const { username, password } = req?.body || {};
+            if (!username || !password) {
+                return handleResponse(res, 400, "Credentials are required");
+            }
+    
+            const { groupedBy } = await connectAndExecuteSSH({ username, password });
+    
+            const activities = await this.activityService.find().exec();
+            if (!activities) {
+                return handleResponse(res, 404, "Activities not found");
+            }
+    
+            for (const activity_ of activities) {
+                const studentUsername = activity_.username;
+                const lastUpdatedAt = activity_.lastUpdatedAt;
+            
+                const activitiesOfStudent = groupedBy[studentUsername];
+                if (!activitiesOfStudent) continue;
+            
+                let totalNewDuration = 0;
+                const newActivities = [];
+            
+                for (const activity of activitiesOfStudent) {
+                    if (parseLastStringToEndDate(activity.date) < lastUpdatedAt) continue;
+            
+                    const { ip, hostname, date } = activity;
+                    const activity_toDB = { ip, hostname, date };
+            
+                    const timeMatch = date.match(/\((\d+):(\d+)\)/);
+                    if (timeMatch) {
+                        const [, minutes, seconds] = timeMatch.map(Number);
+                        const duration = minutes * 60 + seconds;
+                        activity_toDB.duration = formatDuration(duration);
+                        totalNewDuration += duration;
+                    }
+            
+                    newActivities.push(activity_toDB);
+                }
+            
+                if (newActivities.length === 0) continue;
+            
+                const updatedDuration = addDurationToExisted(
+                    activity_.durationOfActivity || "00:00:00",
+                    formatDuration(totalNewDuration)
+                );
+            
+                const updated = await this.activityService.findOneAndUpdate(
+                    { username: studentUsername },
+                    {
+                        $set: { durationOfActivity: updatedDuration },
+                        $push: { activities: { $each: newActivities } }
+                    },
+                    { new: true }
+                ).exec();
+            
+                if (updated.activities?.length > 300) {
+                    updated.activities.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    updated.activities = updated.activities.slice(-150);
+                    await updated.save();
+                }
+            }
+
+            return handleResponse(res, 200, "Activities updated successfully");
+        } catch (error) {
+            console.error("Error fetching activity:", error.message);
+            return handleResponse(res, error?.status || 500, error?.message || "Something went wrong");
         }
     }
 
@@ -208,4 +360,4 @@ class ActivityController {
     }
 }
 
-export default new ActivityController({ activityService: Activity });
+export default new ActivityController({ activityService: Activity, studentService: studentService.studentService });

@@ -39,8 +39,21 @@ class SSHConnection {
         }
         return SSHConnection.instance;
     }
-    // TODO: check what is problem of /api/auth/connect
-    connect() {
+
+    connect(credentials) {
+        this.updateConnectionParams(credentials.username, credentials.password, credentials?.port || this.port, credentials?.host || this.host);
+        return new Promise((resolve, reject) => {
+            this.client.on('ready', () => {
+                console.log(`Connected via SSH user ${this.username} to ${this.host}`);
+                resolve();
+            }).on('error', (err) => {
+                console.error('Connection error:', err);
+                reject(err);
+            }).connect(this.connectionParams);
+        });
+    }
+    // * Connect with .env credentials
+    connect_() {
         return new Promise((resolve, reject) => {
             this.client.on('ready', () => {
                 console.log(`Connected via SSH user ${this.username} to ${this.host}`);
@@ -53,9 +66,10 @@ class SSHConnection {
     }
     
     async checkCredentials(username, password) {
-        const sshClient = SSHConnection.getInstance(this.host, username, password, this.port);
+        this.updateConnectionParams(username, password);
+        const sshClient = SSHConnection.getInstance(this.host, this.username, this.password, this.port);
         try {
-            await sshClient.connect();
+            await sshClient.connect({ username, password, port: this.port, host: this.host });
             console.log('SSH connection successful');
             sshClient.disconnect();
             return true;

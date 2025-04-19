@@ -57,6 +57,15 @@ if (parameter === "updateGroups") {
     }
     await closeServerDB();
 }
+if (parameter === "updateActivitiesOfStudent") { 
+    await initializeServerDB();
+    const students = await studentService.studentService.find().exec();
+    for (const student of students) {
+            const result = await studentService.updateActivitiesOfStudent__(student);
+            console.log(result);
+        }
+    await closeServerDB();
+}
 
 if (parameter === 'addStudents') {
     await initializeServerDB();

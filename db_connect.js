@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { db_uri } from './config.js';
+import ora from 'ora';
 
 class DatabaseConnection {
     static instance = null;
@@ -15,10 +16,11 @@ class DatabaseConnection {
 
     async connect() {
         try {
+            const spinner = ora('Connecting to MongoDB...').start();
             await mongoose.connect(db_uri);
-            console.log('Connected to MongoDB');
+            spinner.succeed('Connected to MongoDB');
         } catch (error) {
-            console.error('Error connecting to MongoDB:', error);
+            console.error('\nError connecting to MongoDB:', error);
         }
     }
 

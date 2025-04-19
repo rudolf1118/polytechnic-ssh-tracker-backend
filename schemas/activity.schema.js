@@ -7,6 +7,7 @@ const Activity = new Schema({
     createdAt: { type: Date, default: Date.now },
     lastUpdatedAt: { type: Date, default: Date.now },
     durationOfActivity: { type: String, default: 0 },
+    lastOnline: { type: Date },
     activities: [{ 
         ip: { type: String, required: true },
         hostname: { type: String, required: true },

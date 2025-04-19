@@ -14,6 +14,7 @@ class AuthController {
     }
     async comparePassword (username, password, res) {
         try {
+            console.log("COMPARE PASSWORD",username)
             const result = await checkCredentials(username, password);
             console.log(result)
             if (!result) {
@@ -66,8 +67,7 @@ class AuthController {
     }
     async login (req, res) {
         try {
-            console.log(req.body)
-            const { username, password } = req.body;
+            const { username, password } = req?.body;
             let isMatch;
             const {iv, encryptedData} = encrypt(password);
             const encrypted_requested_password = iv + ":" + encryptedData;
@@ -75,6 +75,7 @@ class AuthController {
                 return handleResponse(res, 400, "username and password are required");
             }
             const user = await this.student_service.findOne({ username });
+            console.log(user)
             if (!user) {
                 return handleResponse(res, 401, "Invalid username or password");
             }
@@ -170,22 +171,31 @@ class AuthController {
         }
     }
 
-    async checkToken_(req, res) {
+    async checkToken_(req, res, end = false) {
         try {
             const { authorization } = req.headers;
-            if (!authorization) return { status: 401, message: "Authorization header is required"};
+            if (!authorization) {
+                throw new Error("Authorization header is required");
+            }
             const token = authorization.split(" ")[1];
             const user_id = getUserIdFromToken(token);
-            if (!user_id) return { status: 401, message: "Invalid token"};
+            if (!user_id) {
+                throw new Error("Invalid token");
+            }
             const student = await this.student_service.findById(user_id);
-            if (!student) return { status: 401, message: "Invalid token"};
+            if (!student) {
+                throw new Error("Invalid token");
+            }
             const decoded = jwt.verify(token, jwt_secret);
-            if (!decoded) return { status: 401, message: "Invalid token" };
-            if (decoded.id !== student._id.toString()) return { status: 401, message: "Invalid token"};
-            return {res, status: 200, message: "Token is valid", student};
+            if (!decoded || decoded.id !== student._id.toString()) {
+                throw new Error("Invalid token");
+            }
+            return true;
         } catch (error) {
-            return { status: 500, message: error.message };
-
+            if (end) {
+                return handleResponse(res, 401, error.message);
+            }
+            throw error;
         }
     }
 

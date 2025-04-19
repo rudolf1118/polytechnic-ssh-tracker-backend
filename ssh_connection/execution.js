@@ -35,6 +35,7 @@ const handleGroupBy = (data, key) => {
 }
 
 export const checkCredentials = async (username, password) => {
+    console.log("CHECK CREDENTIALS 333", username, password);
     return await SSHConnection.checkCredentials(username, password).catch((err => {  
         throw err;
     }));
@@ -43,16 +44,26 @@ export const checkCredentials = async (username, password) => {
 export const connectAndExecuteSSH = async (user_config) => {
     try {
         const sshClient = SSHConnection;
-        await sshClient.connect();
+        await sshClient.connect(user_config);
         const command = 'last -i';
         const rawData = await sshClient.execCommand(command);
         await sshClient.disconnect();
         console.log('Command output:', rawData.stdout);
-        console.log('Command error:', rawData.stderr);
         const parsed = handleDataToObject(rawData.stdout);
         const groupBy = handleGroupBy(parsed, 'username');
-        fs.writeFileSync(path.join(dir, '../db_example/test_db_default.json'), JSON.stringify(parsed, null, 2));
-        fs.writeFileSync(path.join(dir, '../db_example/test_db_groupedByUsername.json'), JSON.stringify(groupBy, null, 2));
+        const defaultDbPath = path.join(dir, `../db_example/${user_config.username}_test_db_default.json`);
+        const groupedDbPath = path.join(dir, `../db_example/${user_config.username}_test_db_groupedByUsername.json`);
+
+        if (fs.existsSync(defaultDbPath)) {
+            fs.unlinkSync(defaultDbPath);
+        }
+        if (fs.existsSync(groupedDbPath)) {
+            fs.unlinkSync(groupedDbPath);
+        }
+
+        fs.writeFileSync(defaultDbPath, JSON.stringify(parsed, null, 2));
+        fs.writeFileSync(groupedDbPath, JSON.stringify(groupBy, null, 2));
+        return {groupedBy:groupBy, parsed};
     } catch (err) {
         console.error('Error:', err.message);
     }
