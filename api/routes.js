@@ -101,6 +101,10 @@ const handleActivityRoutes = async (req, res, conf) => {
                 return await decorator.withAuth(req, res, activityService.unhandledError.bind(activityService, req, res, 'id or username is required'));
             }
         }
+        else if (pathname === 'getTopParticipants') {
+            const { limit } = query;
+            return await decorator.withAuth(req, res, activityService.countTheBest.bind(activityService, req, res, limit));
+        }
         else {
             return handleResponse(res, 404, "Endpoint not found");
         }
@@ -126,8 +130,6 @@ const handleActivityRoutes = async (req, res, conf) => {
     }
 
 }
-
-
 
 export const handleAPIRoutes = (req, res) => {
     const parsedUrl = parse(req.url, true);

@@ -3,6 +3,7 @@ import { initializeServerDB, closeServerDB } from "../server.js";
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import log from '../utils/log.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const parameter = process.argv[2]
@@ -98,4 +99,39 @@ if (parameter === 'updateActivities_') {
         for (const student of students) {
             const result = await activityService.updateActivityOfStudents(student);
         }
+}
+if (parameter === 'getTopParticipants') {
+    await initializeServerDB();
+
+    log.info("Please specify the number of top participants you want to see (e.g. 1, 3, 5):");
+
+    const topCount = await new Promise(resolve => {
+        process.stdin.resume();
+        process.stdin.setEncoding('utf8');
+        process.stdin.once('data', (input) => {
+            process.stdin.pause();
+            const number = parseInt(input.trim(), 10);
+            if (!isNaN(number) && number > 0) {
+            resolve(number);
+            } else {
+            console.log("Invalid input. Using default top=5");
+            resolve(5);
+            }
+        });
+    });
+
+    const { data } = await activityService.countTheBest_(topCount);
+    log.success(`Top ${topCount} Participants:`);
+    data .forEach((student, index) => {
+        log.info(`NO ${index + 1}.`);
+        log.info(`\x1b[33mUsername:\x1b[0m ${student.username}`);
+        log.info(`\x1b[32mFull Name:\x1b[0m ${student.fullName}`);
+        log.info(`\x1b[36mTotal Sessions:\x1b[0m ${student.totalSessions}`);
+        log.info(`\x1b[34mTotal Duration:\x1b[0m ${student.totalDuration}`);
+        log.info(`\x1b[35mUnique IPs:\x1b[0m ${student.uniqueIPs}`);
+        log.info(`\x1b[31mScore:\x1b[0m ${student.score}`);
+        log.info('----------------------------------------');
+    });
+    closeServerDB();
+    process.exit(0);
 }

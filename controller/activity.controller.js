@@ -1,6 +1,6 @@
 import Activity from '../schemas/activity.schema.js';
 import { studentService } from './controllers.js';
-import { formatDuration, parseLastStringToEndDate, addDurationToExisted } from '../utils/helper.js';
+import { formatDuration, parseLastStringToEndDate, addDurationToExisted, calculateTopParticipants   } from '../utils/helper.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -348,6 +348,51 @@ class ActivityController {
         } catch (error) {
             console.error("Error updating activity:", error.message);
             return handleResponse(res, 500, "An error occurred while updating the activity");
+        }
+    }
+
+    async countTheBest(req, res, limit) {
+        try {
+            const activities = await this.activityService.find().exec();
+            if (!activities) {
+                return handleResponse(res, 404, "Activities not found");
+            }
+            const bestActivities = calculateTopParticipants(activities, limit || 10);
+            if(!bestActivities) {
+                return handleResponse(res, 404, "Best activities not found");
+            }
+            return handleResponse(res, 200, "Best activities found", bestActivities);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
+        }
+    }
+
+    async countTheBest_(limit) {
+        try {
+            const activities = await this.activityService.find().exec();
+            if (!activities) {
+                return {
+                    status: 404,
+                    message: "Activities not found"
+                };
+            }
+            const bestActivities = calculateTopParticipants(activities, limit || 10);
+            if (!bestActivities) {
+                return {
+                    status: 404,
+                    message: "Best activities not found"
+                };
+            }
+            return {
+                status: 200,
+                message: "Best activities found",
+                data: bestActivities
+            };
+        } catch (error) {
+            return {
+                status: 500,
+                message: error.message
+            };
         }
     }
 
