@@ -8,12 +8,20 @@ const __filename = fileURLToPath(import.meta.url);
 import { dirname } from 'path';
 const dir = dirname(__filename);
 const caller = process.argv[1];
-const PORT = 3000;
+const PORT = 8000;
 
 const server = http.createServer((req, res) => {
-    res.setHeader('Content-Type', 'text/plain');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+
+  // * cors-origin check
+  if (req.method === 'OPTIONS') {
+      res.statusCode = 204;
+      res.end();
+      return;
+  }
 
     handleAPIRoutes(req, res)?.then(() => { console.log(`Request method: ${req.method}, URL: ${req.url}`); })
         .catch((err) => {

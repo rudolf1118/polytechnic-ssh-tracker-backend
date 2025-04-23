@@ -4,7 +4,7 @@ import { formatDuration, parseLastStringToEndDate, addDurationToExisted, calcula
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
-import { handleResponse } from '../utils/response.js';
+import { handleResponse, getUserIdFromToken } from '../utils/response.js';
 import { connectAndExecuteSSH } from '../ssh_connection/execution.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -441,6 +441,23 @@ class ActivityController {
         } catch (error) {
             console.error("Error in update_recount_duplicates:", error);
             return handleResponse(res, 500, error.message || "Internal Server Error");
+        }
+    }
+
+    async getMe(req, res) {
+        try {
+            const { authorization } = req.headers;
+            const token = authorization.split(" ")[1];
+            const userId = getUserIdFromToken(token);
+
+            const student = await this.activityService.find({ studentId: userId});
+            if (!student) {
+                return handleResponse(res, 404, "Student's activity not found");
+            }
+
+            return handleResponse(res, 200, "Student's activity found", student);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
         }
     }
 

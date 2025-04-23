@@ -1,5 +1,5 @@
 import Student from '../schemas/student.schema.js';
-import { handleResponse } from '../utils/response.js';
+import { handleResponse, getUserIdFromToken } from '../utils/response.js';
 import { authService, activityService } from './controllers.js';
 import fs from 'fs';
 import path from 'path';
@@ -68,6 +68,36 @@ class StudentController {
         }
     }
 
+    async getMe(req, res) {
+        try {
+            const { authorization } = req.headers;
+            const token = authorization.split(" ")[1];
+            const user_id = getUserIdFromToken(token);
+            const student = await this.studentService.findById(user_id);
+            if (!student) {
+                return handleResponse(res, 404, "Student not found");
+            }
+            return handleResponse(res, 200, "Student found", student);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
+        }
+    }
+
+    async getStudentsByGroup(param, res) {
+        try {
+            console.log(param)
+            const { group } = param.params;
+            console.log(group)
+            const students = await this.studentService.find({ group }).exec();
+            if (!students) {
+                return handleResponse(res, 404, "Students not found");
+            }
+            console.log(students)
+            return handleResponse(res, 200, "Students found", students);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
+        }
+    }
     async updatePassword(req, res) {
         try {
             const { username, password, oldPassword, newPassword} = req.body;

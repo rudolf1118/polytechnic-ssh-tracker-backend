@@ -8,15 +8,19 @@ const handleStudentsRoutes = async (req, res, conf) => {
     const parsedUrl = parse(action, true);
     const { method } = req;
     const { pathname } = parsedUrl;
+    console.log("A")
     // * action example search?id=123
     if (method === 'GET') {
         if (pathname === 'search' && query) {
-            const { firstName, lastName, username, id } = query;
+            const { firstName, lastName, username, id, group } = query;
             if (firstName && lastName) {
                 return await decorator.withAuth(req, res, studentService.getStudentByNameSurname.bind(studentService, { params: { firstName, lastName } }));
             }
             else if (username) {
                 return await decorator.withAuth(req, res, studentService.getStudent.bind(studentService, { params: { username } }, res, 'username'));
+            }
+            else if (group) {
+                return await decorator.withAuth(req, res, studentService.getStudentsByGroup.bind(studentService, { params: { group } }, res));
             }
             else if (id) {
                 return await decorator.withAuth(req, res, studentService.getStudent.bind(studentService, { params: { id } }, res, 'id'));
@@ -24,6 +28,9 @@ const handleStudentsRoutes = async (req, res, conf) => {
             else {
                 return await decorator.withAuth(req, res, studentService.unhandledError.bind(studentService, req, res, 'id or username is required'));
             }
+        }
+        else if (pathname === 'me') {
+            return await decorator.withAuth(req, res, studentService.getMe.bind(studentService, req, res));
         }
         else {
             return handleResponse(res, 404, "Endpoint not found");
@@ -59,12 +66,17 @@ const handleAuthRoutes = async (req, res, conf) => {
         if (pathname === 'disconnect') {
             return await decorator.withAuth(req, res, authService.disconnect.bind(authService));
         }
+        else if (pathname === 'verify') {
+            console.log(req.headers)
+            return await authService.checkToken(req, res);
+        }
         else {
             return handleResponse(res, 404, "Endpoint not found");
         }
     }
     else if (method === "POST") {
         const body = await handleBody(req);
+        console.log(body)
         req.body = body;
         if (pathname === 'login') {
             return await authService.login(req, res);
@@ -102,6 +114,9 @@ const handleActivityRoutes = async (req, res, conf) => {
             } else {
                 return await decorator.withAuth(req, res, activityService.unhandledError.bind(activityService, req, res, 'id or username is required'));
             }
+        }
+        else if (pathname === 'me') {
+            return await decorator.withAuth(req, res, activityService.getMe.bind(activityService, req, res));
         }
         else if (pathname === 'getTopParticipants') {
             const { limit } = query;

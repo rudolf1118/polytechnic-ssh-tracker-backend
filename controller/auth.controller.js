@@ -14,9 +14,7 @@ class AuthController {
     }
     async comparePassword (username, password, res) {
         try {
-            console.log("COMPARE PASSWORD",username)
             const result = await checkCredentials(username, password);
-            console.log(result)
             if (!result) {
                 return {status: 401, message: "Invalid username or password"};
             }
@@ -31,7 +29,6 @@ class AuthController {
     async comparePasswordDB (username, password) {
         try {
             const student = await this.student_service.findOne({ username });
-            console.log(student)
             if (!student) {
                 return false;
             }
@@ -75,7 +72,6 @@ class AuthController {
                 return handleResponse(res, 400, "username and password are required");
             }
             const user = await this.student_service.findOne({ username });
-            console.log(user)
             if (!user) {
                 return handleResponse(res, 401, "Invalid username or password");
             }
@@ -165,7 +161,7 @@ class AuthController {
             const decoded = jwt.verify(token, jwt_secret);
             if (!decoded) return handleResponse(res, 401, "Invalid token");
             if (decoded.id !== student._id.toString()) return handleResponse(res, 401, "Invalid token", null, end);
-            return handleResponse(res, 200, "Token is valid", student, end);
+            return handleResponse(res, 200, "Token is valid", {...student, verified: true }, end);
         } catch (error) {
             return handleResponse(res, 500, error.message, null, end);
         }
