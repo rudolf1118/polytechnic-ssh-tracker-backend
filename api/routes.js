@@ -47,6 +47,7 @@ const handleStudentsRoutes = async (req, res, conf) => {
 
 const handleAuthRoutes = async (req, res, conf) => { 
     const { action, query } = conf;
+    console.log(conf)
     const parsedUrl = parse(action, true);
     const { pathname } = parsedUrl;
     const { method } = req;
@@ -93,6 +94,7 @@ const handleActivityRoutes = async (req, res, conf) => {
                 return await decorator.withAuth(req, res, activityService.getActivityByNameSurname.bind(activityService, { params: { firstName, lastName } }));
             }
             else if (username) {
+                console.log("IM HERE")
                 return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { username } }, 'username'));
             }
             if (id) {
@@ -123,6 +125,9 @@ const handleActivityRoutes = async (req, res, conf) => {
             const body = await handleBody(req);
             req.body = body;
             return await decorator.withAuth(req, res, activityService.fetchActivityAndUpdate.bind(activityService, req, res));
+        }
+        else if (pathname === 'recount') {
+            return await decorator.withAuth(req, res, activityService.update_recount_duplicates.bind(activityService, req, res));
         }
         else {
             return handleResponse(res, 404, "Endpoint not found");

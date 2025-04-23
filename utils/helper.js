@@ -71,7 +71,7 @@ function parseDurationFromString(dateString) {
 /**
  * 
  * @param {*} data Activity Schema
- * @returns  score = durationInMinutes + (totalSessions × 3) + (uniqueIPs × 9)
+ * @returns  score = durationInMinutes + (totalSessions × 2) + (uniqueIPs × 5)
  **/
 export function calculateTopParticipants(users, limit = 0) {
     const result = [];
@@ -87,7 +87,7 @@ export function calculateTopParticipants(users, limit = 0) {
         const sessionCount = user.activities?.length || 0;
         const uniqueIPs = ipSet.size;
 
-        const score = Math.round(durationMinutes + sessionCount * 3 + uniqueIPs * 9);
+        const score = Math.round(durationMinutes * 3 + sessionCount * 2 + uniqueIPs * 3);
         result.push({
             username: user.username,
             fullName: `${user.firstName} ${user.lastName}`,

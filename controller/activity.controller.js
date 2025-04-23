@@ -69,72 +69,78 @@ class ActivityController {
     async createActivity(req, res) {
         try {
             const activity = await this.activityService.createActivity(req.body);
-            res.status(201).json(activity);
+            return handleResponse(res, 201, "Activity created successfully", activity);
         } catch (error) {
-            res.status(500).json({ message: error.message });
+            return handleResponse(res, 500, "Activity not created");
         }
     }
 
     // * For filling DB
     async createActivityFromScratch(students, activities) {
-        try {
-            const students_ = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-            const student_usernames = students.map((student) => student?.username);
+    try {
+        const students_ = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const student_usernames = students.map((student) => student?.username);
 
-            student_usernames.forEach(async (name) => {
-                let lastOnline = "";
-                let userActivity = [];
-                const activitiesOfStudent = activities[name];
-                if (!activitiesOfStudent) return;
+        for (const name of student_usernames) {
+            let lastOnline = null;
+            let userActivity = [];
+            let totalSeconds = 0;
 
-                let duration = 0;
-                activitiesOfStudent.forEach((activity) => {
-                    const activity_toDB = {};
-                    const { ip, hostname, date } = activity;
+            const activitiesOfStudent = activities[name];
+            if (!activitiesOfStudent) continue;
 
-                    activity_toDB.ip = ip;
-                    activity_toDB.hostname = hostname;
-                    activity_toDB.date = date;
+            for (const activity of activitiesOfStudent) {
+                const { ip, hostname, date } = activity;
+                const activity_toDB = { ip, hostname, date };
 
-                    const timeMatch = date.match(/\((\d+):(\d+)\)/);
-                    if (timeMatch) {
-                        const [_, minutes, seconds] = timeMatch.map(Number);
-                        duration += minutes * 60 + seconds;
-                    }
+                const timeMatch = date.match(/\((\d+):(\d+)\)/);
+                let sessionSeconds = 0;
 
-                    activity_toDB.duration = formatDuration(duration) || duration;
-                    if (!lastOnline || parseLastStringToEndDate(date) > lastOnline) lastOnline = parseLastStringToEndDate(date);
-                    userActivity.push(activity_toDB);
-                });
+                if (timeMatch) {
+                    const [, minutes, seconds] = timeMatch.map(Number);
+                    sessionSeconds = minutes * 60 + seconds;
+                    totalSeconds += sessionSeconds;
+                }
 
-                const that_student = students_.find((student) => student.id === name);
-                const create = new Activity({
-                    username: name,
-                    firstName: that_student.firstNameEN,
-                    lastName: that_student.lastNameEN,
-                    studentId: students.find((student) => student.username === name)._id,
-                    createdAt: new Date(),
-                    lastUpdatedAt: new Date(),
-                    durationOfActivity: formatDuration(duration) || duration,
-                    activities: userActivity,
-                    lastOnline,
-                });
+                activity_toDB.duration = formatDuration(sessionSeconds);
 
-                await create.save();
+                const activityDate = parseLastStringToEndDate(date);
+                if (!lastOnline || activityDate > lastOnline) lastOnline = activityDate;
 
-                const student = await studentService.studentService.findOneAndUpdate(
-                    { username: name },
-                    { $push: { activities: create._id } },
-                    { new: true }
-                ).exec();
+                userActivity.push(activity_toDB);
+            }
 
-                console.log(create, student);
+            const that_student = students_.find((student) => student.id === name);
+            const studentId = students.find((student) => student.username === name)?._id;
+
+            const create = new Activity({
+                username: name,
+                firstName: that_student?.firstNameEN || '',
+                lastName: that_student?.lastNameEN || '',
+                studentId,
+                createdAt: new Date(),
+                lastUpdatedAt: new Date(),
+                durationOfActivity: formatDuration(totalSeconds),
+                activities: userActivity,
+                lastOnline,
             });
 
-            console.log("Saved");
-        } catch (error) {
-            throw error;
+            await create.save();
+
+            await studentService.studentService.findOneAndUpdate(
+                { username: name },
+                { $push: { activities: create._id } },
+                { new: true }
+            ).exec();
+
+            console.log(`Created activity for ${name}`);
         }
+
+        console.log("All activities created and linked successfully.");
+    } catch (error) {
+        console.error("Error in createActivityFromScratch:", error);
+        throw error;
+    }
     }
 
     async updateActivityOfStudents(student) {
@@ -231,12 +237,13 @@ class ActivityController {
                 const updated = await this.activityService.findOneAndUpdate(
                     { username: studentUsername },
                     {
-                        $set: { durationOfActivity: updatedDuration,  lastOnline: lastOnline },
+                        $set: { durationOfActivity: updatedDuration,  lastOnline: lastOnline, lastUpdatedAt: new Date() },
                         $push: { activities: { $each: newActivities } }
                     },
                     { new: true }
                 ).exec();
                 updated_count++;
+                console.log(updated)
             
                 if (updated.activities?.length > 300) {
                     updated.activities.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -274,9 +281,11 @@ class ActivityController {
                 if (!activitiesOfStudent) continue;
             
                 let totalNewDuration = 0;
+                let lastOnline;
                 const newActivities = [];
             
                 for (const activity of activitiesOfStudent) {
+                    if (!lastOnline || parseLastStringToEndDate(activity.date) > lastOnline) lastOnline = parseLastStringToEndDate(activity.date);
                     if (parseLastStringToEndDate(activity.date) < lastUpdatedAt) continue;
             
                     const { ip, hostname, date } = activity;
@@ -303,7 +312,7 @@ class ActivityController {
                 const updated = await this.activityService.findOneAndUpdate(
                     { username: studentUsername },
                     {
-                        $set: { durationOfActivity: updatedDuration },
+                        $set: { durationOfActivity: updatedDuration, lastOnline: lastOnline, lastUpdatedAt: new Date() },
                         $push: { activities: { $each: newActivities } }
                     },
                     { new: true }
@@ -336,7 +345,7 @@ class ActivityController {
 
             const updatedActivityOfStudent = await studentService.studentService.findOneAndUpdate(
                 { username: existingActivity.username },
-                { $set: { activities: [] } }, // Set the activities array to an empty array
+                { $set: { activities: [] } },
                 { new: true }
             ).exec();
 
@@ -393,6 +402,45 @@ class ActivityController {
                 status: 500,
                 message: error.message
             };
+        }
+    }
+    
+    async update_recount_duplicates(req, res) {
+        try {
+            const activities = await this.activityService.find().exec();
+            if (!activities || activities.length === 0) {
+                return handleResponse(res, 404, "Activities not found");
+            }
+    
+            for (const activity of activities) {
+                const activityList = activity.activities || [];
+                let totalDuration = "00:00:00";
+                const uniqueActivities = Array.from(
+                    new Map(activityList.map(item => [item.date, item])).values()
+                ).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+                for (const act of uniqueActivities) {
+                    const timeMatch = act.date.match(/\((\d+):(\d+)\)/);
+                    let sessionSeconds = 0;
+    
+                    if (timeMatch) {
+                        const [, minutes, seconds] = timeMatch.map(Number);
+                        sessionSeconds = minutes * 60 + seconds;
+                    }
+                    act.duration = formatDuration(sessionSeconds);
+                    totalDuration = addDurationToExisted(totalDuration, act.duration || "00:00:00");
+                }
+    
+                activity.activities = uniqueActivities;
+                console.log(activity.username, totalDuration);
+                activity.durationOfActivity = totalDuration;
+                await activity.save();
+            }
+    
+            return handleResponse(res, 200, "Activities cleaned and durations updated successfully.");
+        } catch (error) {
+            console.error("Error in update_recount_duplicates:", error);
+            return handleResponse(res, 500, error.message || "Internal Server Error");
         }
     }
 
