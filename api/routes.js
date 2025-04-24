@@ -125,9 +125,11 @@ const handleActivityRoutes = async (req, res, conf) => {
             return await decorator.withAuth(req, res, activityService.countTheBest.bind(activityService, req, res, limit));
         }
         else if (pathname === 'sync') {
-            const res_ = await activityService.fetchActivityAndUpdate_cmd();
-            console.log(res_);
-            return await handleResponse(res, 200, "Sync completed", res_);
+            if (query === 'bulkAction') {
+                const res_ = await activityService.fetchActivityAndUpdate_cmd();
+                console.log(res_);
+                return await handleResponse(res, 200, "Sync completed", res_);
+            }
         }
         else {
             return handleResponse(res, 404, "Endpoint not found");
