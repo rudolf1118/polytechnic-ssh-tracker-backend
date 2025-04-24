@@ -10,6 +10,6 @@ export const port = process.env.PORT || 3000;
 export const db_uri = process.env.MONGODB_URI || '';
 export const jwt_secret = process.env.JWT_SECRET || '';
 export const crypto_algorithm = process.env.CRYPTO_ALGORITHM;
-export const crypto_secret = process.env.CRYPTO_SECRET || '';
+export const crypto_secret = process.env.CRYPTO_SECRET_KEY || '';
 export const crypto_iv = process.env.CRYPTO_IV || '';
 export const jwt_expiration = '1h';
