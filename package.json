@@ -2,8 +2,8 @@
   "type": "module",
   "scripts": {
     "build": "",
-    "start": "nodemon server.js",
-    "start_": "node server.js",
+    "start_": "nodemon server.js",
+    "start": "node server.js",
     "getStudentList": "node ./cmd_log/student_list.js",
     "getActivityList": "node ./cmd_log/activity_list.js",
     "connectSSH": "node ./ssh_connection/client.js connect",
