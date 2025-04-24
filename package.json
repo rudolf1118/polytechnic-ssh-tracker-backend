@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "build": "node ./ssh_connection/build.js",
+    "build": "",
     "start": "nodemon server.js",
     "start_": "node server.js",
     "getStudentList": "node ./cmd_log/student_list.js",
