@@ -7,7 +7,8 @@
     "getStudentList": "node ./cmd_log/student_list.js",
     "getActivityList": "node ./cmd_log/activity_list.js",
     "connectSSH": "node ./ssh_connection/client.js connect",
-    "top": "node ./cmd_log/activity_list.js getTopParticipants"
+    "top": "node ./cmd_log/activity_list.js getTopParticipants",
+    "sync_activities": "npm run getActivityList sync_activities"
   },
   "dependencies": {
     "dotenv": "^16.5.0",

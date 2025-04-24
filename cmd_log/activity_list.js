@@ -100,6 +100,13 @@ if (parameter === 'updateActivities_') {
             const result = await activityService.updateActivityOfStudents(student);
         }
 }
+
+if (parameter === 'sync_activities') {
+    await initializeServerDB();
+    const res = await activityService.fetchActivityAndUpdate_cmd();
+    console.log(res);
+    process.exit(0);
+}
 if (parameter === 'getTopParticipants') {
     await initializeServerDB();
 

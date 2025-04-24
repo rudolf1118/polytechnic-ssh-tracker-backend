@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { handleResponse, getUserIdFromToken } from '../utils/response.js';
 import { connectAndExecuteSSH } from '../ssh_connection/execution.js';
+import {ssh_password, ssh_username} from '../config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -259,18 +260,28 @@ class ActivityController {
         }
     }
 
-    async fetchActivityAndUpdate_cmd(req, res) {
+    async fetchActivityAndUpdate_cmd() {
         try {
-            const { username, password } = req?.body || {};
+            const username = ssh_username;
+            const password = ssh_password;
+            // const { username, password } = req?.body || {};
             if (!username || !password) {
-                return handleResponse(res, 400, "Credentials are required");
+                return {
+                    status: 400,
+                    message: "Credentials are required"
+                }
             }
+            let updated_count = 0;
+            const to_update = []
     
             const { groupedBy } = await connectAndExecuteSSH({ username, password });
     
             const activities = await this.activityService.find().exec();
             if (!activities) {
-                return handleResponse(res, 404, "Activities not found");
+                return {
+                    status: 404,
+                    message: "Activities not found"
+                }
             }
     
             for (const activity_ of activities) {
@@ -317,7 +328,8 @@ class ActivityController {
                     },
                     { new: true }
                 ).exec();
-            
+                updated_count++;
+                to_update.push(updated._id)
                 if (updated.activities?.length > 300) {
                     updated.activities.sort((a, b) => new Date(a.date) - new Date(b.date));
                     updated.activities = updated.activities.slice(-150);
@@ -325,10 +337,17 @@ class ActivityController {
                 }
             }
 
-            return handleResponse(res, 200, "Activities updated successfully");
+            return {
+                status: 200,
+                message: `Activities updated successfully count: ${updated_count}`,
+                ids:`${to_update.map((activity) => activity.toString()).join(", ")}`
+            }
         } catch (error) {
             console.error("Error fetching activity:", error.message);
-            return handleResponse(res, error?.status || 500, error?.message || "Something went wrong");
+            return {
+                status: error?.status || 500,
+                message: error?.message || "Something went wrong"
+            }
         }
     }
 
