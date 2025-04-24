@@ -366,10 +366,15 @@ class ActivityController {
             if (!activities) {
                 return handleResponse(res, 404, "Activities not found");
             }
+            if (limit > activities.length) {
+                limit = activities.length;
+            }
             const bestActivities = calculateTopParticipants(activities, limit || 10);
+
             if(!bestActivities) {
                 return handleResponse(res, 404, "Best activities not found");
             }
+            console.log(bestActivities)
             return handleResponse(res, 200, "Best activities found", bestActivities);
         } catch (error) {
             return handleResponse(res, 500, error.message);

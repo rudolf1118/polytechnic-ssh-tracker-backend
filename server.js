@@ -2,13 +2,14 @@ import http from 'http';
 import dbConnection from './db_connect.js';
 import { handleAPIRoutes } from './api/routes.js';
 import { studentService } from './controller/controllers.js';
+import { port } from './config.js';
 import ora from 'ora';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 import { dirname } from 'path';
 const dir = dirname(__filename);
 const caller = process.argv[1];
-const PORT = 8000;
+const PORT = port || 3000;
 
 const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'text/plain');

@@ -85,14 +85,16 @@ class StudentController {
 
     async getStudentsByGroup(param, res) {
         try {
-            console.log(param)
             const { group } = param.params;
-            console.log(group)
-            const students = await this.studentService.find({ group }).exec();
+            let students;
+            if (group === 'all') {
+                students = await this.studentService.find().exec();
+            } else {
+                students = await this.studentService.find({ group }).exec();
+            }
             if (!students) {
                 return handleResponse(res, 404, "Students not found");
             }
-            console.log(students)
             return handleResponse(res, 200, "Students found", students);
         } catch (error) {
             return handleResponse(res, 500, error.message);

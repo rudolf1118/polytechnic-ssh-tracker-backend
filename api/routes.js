@@ -101,16 +101,18 @@ const handleActivityRoutes = async (req, res, conf) => {
     if (method === 'GET') {
         console.log(pathname)
         if (pathname === 'search' && query) {
-            const { firstName, lastName, username, id } = query;
+            const { firstName, lastName, username, id, studentId } = query;
             if (firstName && lastName) {
                 return await decorator.withAuth(req, res, activityService.getActivityByNameSurname.bind(activityService, { params: { firstName, lastName } }));
             }
             else if (username) {
-                console.log("IM HERE")
-                return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { username } }, 'username'));
+                return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { username } }, res,'username'));
             }
-            if (id) {
-                return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { id } }, 'id'));
+            else if (studentId) {
+                return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { studentId } }, res, 'studentId'));
+            }
+            else if (id) {
+                return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { id } }, res, 'id'));
             } else {
                 return await decorator.withAuth(req, res, activityService.unhandledError.bind(activityService, req, res, 'id or username is required'));
             }

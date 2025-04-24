@@ -92,6 +92,8 @@ export function calculateTopParticipants(users, limit = 0) {
             username: user.username,
             fullName: `${user.firstName} ${user.lastName}`,
             totalSessions: sessionCount,
+            studentId: user.studentId,
+            lastOnline: user.lastOnline,
             totalDuration: formatDuration(duration_student_seconds),
             uniqueIPs,
             score
