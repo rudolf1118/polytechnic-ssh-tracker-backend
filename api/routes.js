@@ -101,7 +101,7 @@ const handleActivityRoutes = async (req, res, conf) => {
     if (method === 'GET') {
         console.log(pathname)
         if (pathname === 'search' && query) {
-            const { firstName, lastName, username, id, studentId } = query;
+            const { firstName, lastName, username, id, studentId, action } = query;
             if (firstName && lastName) {
                 return await decorator.withAuth(req, res, activityService.getActivityByNameSurname.bind(activityService, { params: { firstName, lastName } }));
             }
@@ -125,11 +125,11 @@ const handleActivityRoutes = async (req, res, conf) => {
             return await decorator.withAuth(req, res, activityService.countTheBest.bind(activityService, req, res, limit));
         }
         else if (pathname === 'sync') {
-            if (query === 'bulkAction') {
+            if (action === 'bulkAction') {
                 const res_ = await activityService.fetchActivityAndUpdate_cmd();
                 console.log(res_);
                 return await handleResponse(res, 200, "Sync completed", res_);
-            }
+            } return await handleResponse(res, 404, "Endpoint not found");
         }
         else {
             return handleResponse(res, 404, "Endpoint not found");
