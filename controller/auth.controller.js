@@ -5,7 +5,7 @@ import { encrypt, decrypt } from '../utils/crypto.js';
 import tokenGenerator from '../jwt/generate_token.js';
 import { instance as SSHConnection } from '../ssh_connection/client.js';
 import jwt from 'jsonwebtoken';
-import { jwt_secret } from '../config.js';
+import { jwt_secret, basic_password, basic_username } from '../config.js';
 
 class AuthController {
 
@@ -191,6 +191,27 @@ class AuthController {
             if (end) {
                 return handleResponse(res, 401, error.message);
             }
+            throw error;
+        }
+    }
+
+    async checkBasic(req, res) {
+        try {
+            const { authorization } = req.headers;
+            if (!authorization) {
+                throw new Error("Authorization header is required");
+            }
+            const token = authorization.split(" ")[1];
+            const decoded = Buffer.from(token, 'base64').toString('utf-8');
+            const [username, password] = decoded.split(':');
+            if (!username || !password) {
+                throw new Error("Invalid username or password");
+            }
+            if ( username !== basic_username || password !== basic_password) {
+                throw new Error("Invalid username or password");
+            }
+            return true;
+        } catch (error) {
             throw error;
         }
     }

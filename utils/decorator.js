@@ -2,7 +2,6 @@ import { authService } from "../controller/controllers.js";
 import { handleResponse } from "./response.js";
 class Decorator {
     constructor() {
-        this.decorators = [];
     }
     
     async withAuth(req, res, handler) {
@@ -15,6 +14,21 @@ class Decorator {
                 }
                 return handleResponse(res, 500, "Something went wrong");
             }
+    }
+
+    async withBasicAuth(req, res, handler, isRes = true) {
+        try {
+            await authService.checkBasic(req, res);
+            return (await handler(req, res));
+        } catch (error) {
+            if (isRes) {
+                if (error) {
+                    return handleResponse(res, 401, error.message);
+                }
+                return handleResponse(res, 500, "Something went wrong");
+            }
+            throw error;
+        }
     }
 }
 

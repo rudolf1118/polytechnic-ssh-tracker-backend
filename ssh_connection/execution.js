@@ -51,8 +51,12 @@ export const connectAndExecuteSSH = async (user_config) => {
         console.log('Command output:', rawData.stdout);
         const parsed = handleDataToObject(rawData.stdout);
         const groupBy = handleGroupBy(parsed, 'username');
-        const defaultDbPath = path.join(dir, `../db_example/${user_config.username}_test_db_default.json`);
-        const groupedDbPath = path.join(dir, `../db_example/${user_config.username}_test_db_groupedByUsername.json`);
+        const defaultDir = path.join(dir, `../db_example/${user_config.username}`);
+        if (!fs.existsSync(defaultDir)) {
+            fs.mkdirSync(defaultDir, { recursive: true });
+        }
+        const defaultDbPath = path.join(dir, `../db_example/${user_config.username}/${user_config.username}_test_db_default.json`);
+        const groupedDbPath = path.join(dir, `../db_example/${user_config.username}/${user_config.username}_test_db_groupedByUsername.json`);
 
         if (fs.existsSync(defaultDbPath)) {
             fs.unlinkSync(defaultDbPath);
@@ -63,7 +67,7 @@ export const connectAndExecuteSSH = async (user_config) => {
 
         fs.writeFileSync(defaultDbPath, JSON.stringify(parsed, null, 2));
         fs.writeFileSync(groupedDbPath, JSON.stringify(groupBy, null, 2));
-        return {groupedBy:groupBy, parsed};
+        return { groupedBy:groupBy, parsed};
     } catch (err) {
         console.error('Error:', err.message);
     }

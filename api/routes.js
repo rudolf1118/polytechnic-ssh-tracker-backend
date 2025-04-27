@@ -111,7 +111,7 @@ const handleActivityRoutes = async (req, res, conf) => {
                 return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { studentId } }, res, 'studentId'));
             }
             else if (id) {
-                return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { id } }, res, 'id'));
+                return await decorator.withAuth(req, res, activityService.getActivity.bind(activityService, { params: { id } }, res, ' id'));
             } else {
                 return await decorator.withAuth(req, res, activityService.unhandledError.bind(activityService, req, res, 'id or username is required'));
             }
@@ -124,9 +124,15 @@ const handleActivityRoutes = async (req, res, conf) => {
             return await decorator.withAuth(req, res, activityService.countTheBest.bind(activityService, req, res, limit));
         }
         else if (pathname === 'sync_bulkAction') {
-            const res_ = await activityService.fetchActivityAndUpdate_cmd();
-            console.log(res_);
-            return await handleResponse(res, 200, "Sync completed", res_);
+            try {
+                const res_ = await decorator.withBasicAuth(req, res, activityService.fetchActivityAndUpdate_cmd.bind(activityService, req, res), false);
+                return handleResponse(res, 200, "Sync completed", res_);
+            } catch (error) {
+                console.error('Sync error:', error.message);
+                res.writeHead(400, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ message: "Sync Failed", error: error.message }));
+                return ;
+            }
         }
         else {
             return handleResponse(res, 404, "Endpoint not found");
@@ -134,8 +140,9 @@ const handleActivityRoutes = async (req, res, conf) => {
     }
     else if (method === "POST") {
         if (pathname === 'create') {
-            const student = req.body;
-            return await decorator.withAuth(req, res, activityService.createActivity.bind(activityService, student));
+            const body = await handleBody(req);
+            req.body = body;
+            return await decorator.withAuth(req, res, activityService.createActivity.bind(activityService, req, res));
         }
         else if (pathname === 'update') {
             const body = await handleBody(req);
@@ -170,6 +177,11 @@ export const handleAPIRoutes = (req, res) => {
             return handleActivityRoutes(req, res, {action, query});
         case "auth":
             return handleAuthRoutes(req, res, {action, query});
+        case "ping":
+            console.log("ping");
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "Pong" }));
+            return ;
         default:
             res.writeHead(404, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ message: "Not Found" }));
