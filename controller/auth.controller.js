@@ -115,18 +115,23 @@ class AuthController {
             const { authorization } = req.headers;
             const token = authorization.split(" ")[1];
             const user_id = getUserIdFromToken(token);
-            console.log(user_id)
             const student = await this.student_service.findById(user_id);
-            console.log(student)
             if (!student) {
                 return handleResponse(res, 401, "Invalid username or password");
+            }
+            let credentials;
+            if (student.role === "admin") {
+                credentials = { username: admin_basic_username, password: admin_basic_password };
+            }
+            else {
+                credentials = { username: student.username, password: decrypt(student.password.split(":")[1], student.password.split(":")[0]) };
             }
             const { username, password: encrypted_password } = student;
             const real_password = decrypt(encrypted_password.split(":")[1], encrypted_password.split(":")[0]);
             const ssh_client = SSHConnection;
             console.log(real_password)
             ssh_client.updateConnectionParams(username, real_password);
-            await ssh_client.connect().catch((error) =>{
+            await ssh_client.connect(credentials).catch((error) =>{
                 throw {status: 404, message: error.message};
             })
             return handleResponse(res, 200, "Connection successful");
@@ -161,7 +166,8 @@ class AuthController {
             const token = authorization.split(" ")[1];
             const user_id = getUserIdFromToken(token);
             if (!user_id) return handleResponse(res, 401, "Invalid token", null, end);
-            const student = await this.student_service.findById(user_id);
+            const student = await this.student_service.findById(user_id).lean();
+            console.log(student)
             if (!student) return handleResponse(res, 401, "Invalid token", null, end);
             const decoded = jwt.verify(token, jwt_secret);
             if (!decoded) return handleResponse(res, 401, "Invalid token");
@@ -224,6 +230,28 @@ class AuthController {
         } catch (error) {
             console.error(error);
             return handleResponse(res, 500, "Internal Server Error");
+        }
+    }
+
+    async executeSSHCommand(req, res) {
+        try {
+            const { authorization } = req.headers;
+            const token = authorization.split(" ")[1];
+            const user_id = getUserIdFromToken(token);
+            const student = await this.student_service.findById(user_id);
+            if (!student) {
+                return handleResponse(res, 401, "Invalid username or password");
+            }
+            const ssh_client = SSHConnection;
+            const { command } = req.body;
+            if (!command) {
+                return handleResponse(res, 400, "Command is required");
+            }
+            const result = await ssh_client.execCommand(command);
+            console.log(result)
+            return handleResponse(res, 200, "Command executed successfully", result);
+        } catch (error) {
+            return handleResponse(res, 500, error.message);
         }
     }
 

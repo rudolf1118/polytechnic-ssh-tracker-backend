@@ -20,7 +20,7 @@ class ActivityController {
 
     async getActivities(req, res) {
         try {
-            const activities = await this.activityService.find();
+            const activities = await this.activityService.find().lean();
             if (!activities) {
                 return handleResponse(res, 404, "No activities found");
             }
@@ -350,6 +350,112 @@ class ActivityController {
             }
         }
     }
+    async fetchActivityAndUpdate_proto(req, res) {
+        try {
+            const {authorization} = req.headers;
+            const token = authorization.split(" ")[1];
+            const userId = getUserIdFromToken(token);
+            const student = await this.studentService.findById(userId).lean();
+            if (!student) {
+                return {
+                    status: 404,
+                    message: "Student not found"
+                }
+            }
+            else if (student.role !== 'admin'){
+                return {
+                    status: 403,
+                    message: "You are not allowed to access this page"
+                }
+            }
+            const username = ssh_username;
+            const password = ssh_password;
+            // const { username, password } = req?.body || {};
+            if (!username || !password) {
+                return {
+                    status: 400,
+                    message: "Credentials are required"
+                }
+            }
+            let updated_count = 0;
+            const to_update = []
+    
+            const { groupedBy } = await connectAndExecuteSSH({ username, password });
+    
+            const activities = await this.activityService.find().lean();
+            if (!activities) {
+                return {
+                    status: 404,
+                    message: "Activities not found"
+                }
+            }
+    
+            for (const activity_ of activities) {
+                const studentUsername = activity_.username;
+                const lastUpdatedAt = activity_.lastUpdatedAt;
+            
+                const activitiesOfStudent = groupedBy[studentUsername];
+                if (!activitiesOfStudent) continue;
+            
+                let totalNewDuration = 0;
+                let lastOnline;
+                const newActivities = [];
+            
+                for (const activity of activitiesOfStudent) {
+                    if (!lastOnline || parseLastStringToEndDate(activity.date) > lastOnline) lastOnline = parseLastStringToEndDate(activity.date);
+                    if (parseLastStringToEndDate(activity.date) < lastUpdatedAt) continue;
+            
+                    const { ip, hostname, date } = activity;
+                    const activity_toDB = { ip, hostname, date };
+            
+                    const timeMatch = date.match(/\((\d+):(\d+)\)/);
+                    if (timeMatch) {
+                        const [, minutes, seconds] = timeMatch.map(Number);
+                        const duration = minutes * 60 + seconds;
+                        activity_toDB.duration = formatDuration(duration);
+                        totalNewDuration += duration;
+                    }
+            
+                    newActivities.push(activity_toDB);
+                }
+            
+                if (newActivities.length === 0) continue;
+            
+                const updatedDuration = addDurationToExisted(
+                    activity_.durationOfActivity || "00:00:00",
+                    formatDuration(totalNewDuration)
+                );
+            
+                const updated = await this.activityService.findOneAndUpdate(
+                    { username: studentUsername },
+                    {
+                        $set: { durationOfActivity: updatedDuration, lastOnline: lastOnline, lastUpdatedAt: new Date() },
+                        $push: { activities: { $each: newActivities } }
+                    },
+                    { new: true }
+                ).lean();
+                updated_count++;
+                to_update.push(updated._id)
+                if (updated.activities?.length > 300) {
+                    updated.activities.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    updated.activities = updated.activities.slice(-150);
+                    await updated.save();
+                }
+            }
+
+            return {
+                status: 200,
+                message: `Activities updated successfully count: ${updated_count}`,
+                ids:`${to_update.map((activity) => activity.toString()).join(", ")}`
+            }
+        } catch (error) {
+            console.error("Error fetching activity:", error.message);
+            return {
+                status: error?.status || 500,
+                message: error?.message || "Something went wrong"
+            }
+        }
+    }
 
     async updateActivity(req, res) {
         try {
@@ -474,7 +580,7 @@ class ActivityController {
             const token = authorization.split(" ")[1];
             const userId = getUserIdFromToken(token);
 
-            const student = await this.activityService.find({ studentId: userId});
+            const student = await this.activityService.find({ studentId: userId}).lean();
             if (!student) {
                 return handleResponse(res, 404, "Student's activity not found");
             }

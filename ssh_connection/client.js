@@ -41,6 +41,7 @@ class SSHConnection {
     }
 
     connect(credentials) {
+        console.log(credentials)
         this.updateConnectionParams(credentials.username, credentials.password, credentials?.port || this.port, credentials?.host || this.host);
         return new Promise((resolve, reject) => {
             this.client.on('ready', () => {
@@ -87,7 +88,11 @@ class SSHConnection {
                 let stderr = '';
 
                 stream.on('close', (code, signal) => {
-                    resolve({ stdout, stderr, code, signal });
+                    if (code !== 0) {
+                        reject({ stdout, stderr, code, signal });
+                    } else {
+                        resolve({ stdout, stderr, code, signal });
+                    }
                 }).on('data', (data) => {
                     stdout += data.toString();
                 }).stderr.on('data', (data) => {

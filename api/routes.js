@@ -61,7 +61,7 @@ const handleAuthRoutes = async (req, res, conf) => {
 
     if (method === 'GET') {
         if (pathname === 'connect') {
-            return await decorator.withAuth(req, res, authService.setConnection.bind(authService));
+            return await decorator.withAuth(req, res, authService.setConnection.bind(authService), false);
         }
         if (pathname === 'disconnect') {
             return await decorator.withAuth(req, res, authService.disconnect.bind(authService));
@@ -84,6 +84,9 @@ const handleAuthRoutes = async (req, res, conf) => {
         else if (pathname === 'updatePassword') {
             // return await studentService.updatePassword(req, res);
             return await decorator.withAuth(req, res, studentService.updatePassword);
+        }
+        else if (pathname === 'execute') {
+            return await decorator.withAuth(req, res, authService.executeSSHCommand.bind(authService, req, res));
         }
         else {
             return handleResponse(res, 404, "Endpoint not found");
@@ -126,6 +129,17 @@ const handleActivityRoutes = async (req, res, conf) => {
         else if (pathname === 'sync_bulkAction') {
             try {
                 const res_ = await decorator.withBasicAuth(req, res, activityService.fetchActivityAndUpdate_cmd.bind(activityService, req, res), false);
+                return handleResponse(res, 200, "Sync completed", res_);
+            } catch (error) {
+                console.error('Sync error:', error.message);
+                res.writeHead(400, { "Content-Type": "application/json" });
+                res.end(JSON.stringify({ message: "Sync Failed", error: error.message }));
+                return ;
+            }
+        }
+        else if (pathname === 'syncUsersActivity') {
+            try {
+                const res_ = await decorator.withAuth(req, res, activityService.fetchActivityAndUpdate_cmd.bind(activityService, req, res), false);
                 return handleResponse(res, 200, "Sync completed", res_);
             } catch (error) {
                 console.error('Sync error:', error.message);

@@ -85,7 +85,7 @@ class StudentController {
             if (!value) throw new Error(`${key} is required`);
             console.log(this.studentService)
             const query = key === 'id'
-                ? this.studentService.findById(value)
+                ? this.studentService.findById(value).lean()
                 : this.studentService.find({ [key]: value }).lean();
 
             const student = await query;
@@ -105,7 +105,7 @@ class StudentController {
             const { authorization } = req.headers;
             const token = authorization.split(" ")[1];
             const user_id = getUserIdFromToken(token);
-            const student = await this.studentService.findById(user_id);
+            const student = await this.studentService.findById(user_id).lean();
             if (!student) {
                 return handleResponse(res, 404, "Student not found");
             }
