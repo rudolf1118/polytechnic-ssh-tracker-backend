@@ -123,8 +123,8 @@ const handleActivityRoutes = async (req, res, conf) => {
             return await decorator.withAuth(req, res, activityService.getMe.bind(activityService, req, res));
         }
         else if (pathname === 'getTopParticipants') {
-            const { limit } = query;
-            return await decorator.withAuth(req, res, activityService.countTheBest.bind(activityService, req, res, limit));
+            const { limit, group } = query;
+            return await decorator.withAuth(req, res, activityService.countTheBest.bind(activityService, req, res, { limit, group }));
         }
         else if (pathname === 'sync_bulkAction') {
             try {

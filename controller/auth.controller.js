@@ -6,6 +6,7 @@ import tokenGenerator from '../jwt/generate_token.js';
 import { instance as SSHConnection } from '../ssh_connection/client.js';
 import jwt from 'jsonwebtoken';
 import { jwt_secret, admin_basic_password, admin_basic_username, basic_username, basic_password } from '../config.js';
+import { hidePassword } from '../utils/helper.js';
 
 class AuthController {
 
@@ -76,7 +77,7 @@ class AuthController {
             if (!username || !password) {
                 return handleResponse(res, 400, "username and password are required");
             }
-            const user = await this.student_service.findOne({ username });
+            const user = await this.student_service.findOne({ username }).lean();
             if (!user) {
                 return handleResponse(res, 401, "Invalid username or password");
             }
@@ -104,7 +105,7 @@ class AuthController {
                 return handleResponse(res, 401, "Invalid username or password");
             }
 
-            return handleResponse(res, 200, "Login successful", token);
+            return handleResponse(res, 200, "Login successful", { token: token.token, user: hidePassword(user) });
         } catch (error) {
             return handleResponse(res, 500, error.message);
         }
@@ -136,8 +137,7 @@ class AuthController {
             })
             return handleResponse(res, 200, "Connection successful");
         } catch (error) {
-            handleResponse(res, error.status || 500, error.message);
-            throw error;
+            return handleResponse(res, error.status || 500, error.message);
         }
     }
 

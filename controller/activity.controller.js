@@ -485,12 +485,26 @@ class ActivityController {
         }
     }
 
-    async countTheBest(req, res, limit) {
+    async countTheBest(req, res, params) {
         try {
-            const activities = await this.activityService.find().lean();
-            if (!activities) {
+            let { limit, group } = params;
+            const activities_ = await this.activityService.find().lean();
+            let activities = [];
+            if (!activities_) {
                 return handleResponse(res, 404, "Activities not found");
             }
+            if (group !== "all") {
+                for (const activity of activities_) {
+                    const student = await this.studentService.findById(activity.studentId).lean();
+                    if (!student) {
+                        return handleResponse(res, 404, "Student not found");
+                    }
+                    if (student.group === group) {
+                        activities.push(activity);
+                    }
+                }
+            }
+            else activities = activities_;
             if (limit > activities.length) {
                 limit = activities.length;
             }
