@@ -1,6 +1,6 @@
 import Activity from '../schemas/activity.schema.js';
 import { studentService } from './controllers.js';
-import { formatDuration, parseLastStringToEndDate, addDurationToExisted, calculateTopParticipants   } from '../utils/helper.js';
+import { formatDuration, parseLastStringToEndDate, addDurationToExisted, calculateTopParticipants, hidePassword   } from '../utils/helper.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -37,7 +37,7 @@ class ActivityController {
 
             const query = key === 'id'
                 ? this.activityService.findById(value)
-                : this.activityService.find({ [key]: value }).exec();
+                : this.activityService.find({ [key]: value }).lean();
 
             const activity = await query;
 
@@ -56,7 +56,7 @@ class ActivityController {
             const { firstName, lastName } = req.params;
             if (!firstName || !lastName) throw new Error("firstName and lastName are required");
 
-            const activity = await this.activityService.find({ firstName, lastName }).exec();
+            const activity = await this.activityService.find({ firstName, lastName }).lean();
             if (!activity) {
                 return handleResponse(res, 404, "Activity not found");
             }
@@ -132,7 +132,7 @@ class ActivityController {
                 { username: name },
                 { $push: { activities: create._id } },
                 { new: true }
-            ).exec();
+            ).lean();
 
             console.log(`Created activity for ${name}`);
         }
@@ -161,7 +161,7 @@ class ActivityController {
                 { $push: { activities: existingActivity?.id } }, 
                 { $set: {modifyAt: new Date() } },
                 { new: true }
-            ).exec();
+            ).lean();
 
             if (!updatedActivityOfStudent) {
                 return {
@@ -193,7 +193,7 @@ class ActivityController {
             let updated_count = 0;
             const { groupedBy } = await connectAndExecuteSSH({ username, password });
     
-            const activities = await this.activityService.find().exec();
+            const activities = await this.activityService.find().lean();
             console.log(activities)
             if (!activities) {
                 return handleResponse(res, 404, "Activities not found");
@@ -242,7 +242,7 @@ class ActivityController {
                         $push: { activities: { $each: newActivities } }
                     },
                     { new: true }
-                ).exec();
+                ).lean();
                 updated_count++;
                 console.log(updated)
             
@@ -276,7 +276,7 @@ class ActivityController {
     
             const { groupedBy } = await connectAndExecuteSSH({ username, password });
     
-            const activities = await this.activityService.find().exec();
+            const activities = await this.activityService.find().lean();
             if (!activities) {
                 return {
                     status: 404,
@@ -327,7 +327,7 @@ class ActivityController {
                         $push: { activities: { $each: newActivities } }
                     },
                     { new: true }
-                ).exec();
+                ).lean();
                 updated_count++;
                 to_update.push(updated._id)
                 if (updated.activities?.length > 300) {
@@ -366,7 +366,7 @@ class ActivityController {
                 { username: existingActivity.username },
                 { $set: { activities: [] } },
                 { new: true }
-            ).exec();
+            ).lean();
 
             if (!updatedActivityOfStudent) {
                 return handleResponse(res, 500, "Activity not updated");
@@ -381,7 +381,7 @@ class ActivityController {
 
     async countTheBest(req, res, limit) {
         try {
-            const activities = await this.activityService.find().exec();
+            const activities = await this.activityService.find().lean();
             if (!activities) {
                 return handleResponse(res, 404, "Activities not found");
             }
@@ -402,7 +402,7 @@ class ActivityController {
 
     async countTheBest_(limit) {
         try {
-            const activities = await this.activityService.find().exec();
+            const activities = await this.activityService.find().lean();
             if (!activities) {
                 return {
                     status: 404,
@@ -431,7 +431,7 @@ class ActivityController {
     
     async update_recount_duplicates(req, res) {
         try {
-            const activities = await this.activityService.find().exec();
+            const activities = await this.activityService.find().lean();
             if (!activities || activities.length === 0) {
                 return handleResponse(res, 404, "Activities not found");
             }
@@ -479,7 +479,7 @@ class ActivityController {
                 return handleResponse(res, 404, "Student's activity not found");
             }
 
-            return handleResponse(res, 200, "Student's activity found", student);
+            return handleResponse(res, 200, "Student's activity found", hidePassword(student));
         } catch (error) {
             return handleResponse(res, 500, error.message);
         }

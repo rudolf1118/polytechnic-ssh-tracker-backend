@@ -102,3 +102,15 @@ export function calculateTopParticipants(users, limit = 0) {
 
     return !limit ? result.sort((a, b) => b.score - a.score) : result.sort((a, b) => b.score - a.score).slice(0, limit);
 }
+
+export function hidePassword(data) {
+    if (!data) return null;
+    if (Array.isArray(data)) {
+        return data.map(item => hidePassword(item));
+    }
+    if (typeof data === 'object' && data !== null) {
+        const { password, ...rest } = data;
+        return rest;
+    }
+    return data;
+}

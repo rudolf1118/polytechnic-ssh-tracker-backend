@@ -14,7 +14,7 @@ const handleStudentsRoutes = async (req, res, conf) => {
         if (pathname === 'search' && query) {
             const { firstName, lastName, username, id, group } = query;
             if (firstName && lastName) {
-                return await decorator.withAuth(req, res, studentService.getStudentByNameSurname.bind(studentService, { params: { firstName, lastName } }));
+                return await decorator.withAuth(req, res, studentService.getStudentByNameSurname.bind(studentService, { params: { firstName, lastName } }, res));
             }
             else if (username) {
                 return await decorator.withAuth(req, res, studentService.getStudent.bind(studentService, { params: { username } }, res, 'username'));
@@ -181,6 +181,10 @@ export const handleAPIRoutes = (req, res) => {
             console.log("ping");
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(JSON.stringify({ message: "Pong" }));
+            return ;
+        case "health":
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ message: "OK" }));
             return ;
         default:
             res.writeHead(404, { "Content-Type": "application/json" });

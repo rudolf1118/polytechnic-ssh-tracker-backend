@@ -35,7 +35,7 @@ const handleGroupBy = (data, key) => {
 }
 
 export const checkCredentials = async (username, password) => {
-    console.log("CHECK CREDENTIALS 333", username, password);
+    console.log("CHECK CREDENTIALS SSH", username, password);
     return await SSHConnection.checkCredentials(username, password).catch((err => {  
         throw err;
     }));

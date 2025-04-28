@@ -5,7 +5,7 @@ import { encrypt, decrypt } from '../utils/crypto.js';
 import tokenGenerator from '../jwt/generate_token.js';
 import { instance as SSHConnection } from '../ssh_connection/client.js';
 import jwt from 'jsonwebtoken';
-import { jwt_secret, basic_password, basic_username } from '../config.js';
+import { jwt_secret, admin_basic_password, admin_basic_username, basic_username, basic_password } from '../config.js';
 
 class AuthController {
 
@@ -47,6 +47,7 @@ class AuthController {
     }
 
     async generateToken(user) {
+        // eslint-disable-next-line no-useless-catch
         try {
             const [db_checking] = await Promise.all([
                 this.comparePasswordDB(user.username, user.password)
@@ -62,12 +63,16 @@ class AuthController {
             throw error;
         }
     }
+
+
     async login (req, res) {
         try {
+            // eslint-disable-next-line no-unsafe-optional-chaining
             const { username, password } = req?.body;
             let isMatch;
             const {iv, encryptedData} = encrypt(password);
             const encrypted_requested_password = iv + ":" + encryptedData;
+
             if (!username || !password) {
                 return handleResponse(res, 400, "username and password are required");
             }
@@ -75,12 +80,12 @@ class AuthController {
             if (!user) {
                 return handleResponse(res, 401, "Invalid username or password");
             }
-            if (!user.password) {
-                isMatch = await this.comparePassword(username, password, res).catch((error) => {throw error});
-            }
-            else if (user.password) {
-                isMatch = await this.comparePassword(username, decrypt(user.password.split(":")[1], user.password.split(":")[0]), res).catch((error) => {throw error});
-            }
+            const credentials = user?.role === 'admin'  
+            ? { username: admin_basic_username, password: admin_basic_password } :
+            ( user?.password ? {username, password: decrypt(user.password.split(":")[1], user.password.split(":")[0]) } : { username, password });
+            
+            isMatch = await this.comparePassword(credentials.username, credentials.password, res).catch((error) => {throw error});
+            
             if (!isMatch || !(isMatch.status >= 200 && isMatch.status <= 399)) {
                 console.log(isMatch.status)
                 return handleResponse(res, 401, "Invalid username or password");
@@ -195,24 +200,30 @@ class AuthController {
         }
     }
 
+
     async checkBasic(req, res) {
         try {
             const { authorization } = req.headers;
-            if (!authorization) {
-                throw new Error("Authorization header is required");
+            if (!authorization || !authorization.startsWith('Basic ')) {
+                return handleResponse(res, 401, "Authorization header missing or invalid");
             }
-            const token = authorization.split(" ")[1];
+
+            const token = authorization.split(' ')[1];
             const decoded = Buffer.from(token, 'base64').toString('utf-8');
             const [username, password] = decoded.split(':');
+
             if (!username || !password) {
-                throw new Error("Invalid username or password");
+                return handleResponse(res, 401, "Invalid authorization format");
             }
-            if ( username !== basic_username || password !== basic_password) {
-                throw new Error("Invalid username or password");
+
+            if (username !== basic_username || password !== basic_password) {
+                return handleResponse(res, 401, "Invalid username or password");
             }
+
             return true;
         } catch (error) {
-            throw error;
+            console.error(error);
+            return handleResponse(res, 500, "Internal Server Error");
         }
     }
 

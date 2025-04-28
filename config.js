@@ -15,3 +15,5 @@ export const crypto_iv = process.env.CRYPTO_IV || '';
 export const jwt_expiration = '1h';
 export const basic_username = process.env.BASIC_USERNAME || '';
 export const basic_password = process.env.BASIC_PASSWORD || '';
+export const admin_basic_username = process.env.ADMIN_USERNAME || '';
+export const admin_basic_password = process.env.ADMIN_PASSWORD || '';

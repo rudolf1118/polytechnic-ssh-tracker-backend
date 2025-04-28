@@ -36,7 +36,7 @@ export const activityList = async (filter) => {
             Object.assign(filterCriteria, filter);
             }
         }
-        const list = await activityService.activityService.find(Object.keys(filterCriteria).length ? filterCriteria : null).exec();
+        const list = await activityService.activityService.find(Object.keys(filterCriteria).length ? filterCriteria : null).lean();
         // console.table(list)
         let count = 0;
         list.forEach((student) => {
@@ -82,20 +82,20 @@ if (parameter === "addActivities") {
     const data = fs.readFileSync(path.join(__dirname, '../db_example/test_db_groupedByUsername.json'), 'utf-8')
     if (data) {
         const parsed = JSON.parse(data);
-        const students = await studentService.studentService.find().exec();
+        const students = await studentService.studentService.find().lean();
         const result = await activityService.createActivityFromScratch(students, parsed);
     }
 }
 if (parameter === 'updateActivities') {
     await initializeServerDB();
-        const students = await studentService.studentService.find().exec();
+        const students = await studentService.studentService.find().lean();
         for (const student of students) {
             const result = await activityService.updateActivityOfStudents(student);
         }
 }
 if (parameter === 'updateActivities_') {
     await initializeServerDB();
-        const students = await studentService.studentService.find().exec();
+        const students = await studentService.studentService.find().lean();
         for (const student of students) {
             const result = await activityService.updateActivityOfStudents(student);
         }

@@ -14,7 +14,7 @@ export const studentList = async (filter) => {
         await initializeServerDB();
         spinner.text = 'Fetching student list...';
 
-        const list = await studentService.studentService.find().exec();
+        const list = await studentService.studentService.find().lean();
         spinner.succeed('Data fetched successfully!\n');
 
         let count = 0;
@@ -59,7 +59,7 @@ if (parameter === "updateGroups") {
 }
 if (parameter === "updateActivitiesOfStudent") { 
     await initializeServerDB();
-    const students = await studentService.studentService.find().exec();
+    const students = await studentService.studentService.find().lean();
     for (const student of students) {
             const result = await studentService.updateActivitiesOfStudent__(student);
             console.log(result);

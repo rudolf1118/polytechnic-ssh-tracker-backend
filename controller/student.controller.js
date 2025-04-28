@@ -1,8 +1,8 @@
 import Student from '../schemas/student.schema.js';
 import { handleResponse, getUserIdFromToken } from '../utils/response.js';
 import { authService, activityService } from './controllers.js';
-import fs from 'fs';
-import path from 'path';
+import { encrypt } from '../utils/crypto.js';
+import { hidePassword } from '../utils/helper.js';
 
 class StudentController {
 
@@ -16,9 +16,41 @@ class StudentController {
             if (!students) {
                 return handleResponse(res, 404, "No students found");
             }
-            return handleResponse(res, 200, "Students found", students);
+            return handleResponse(res, 200, "Students found", hidePassword(students));
         } catch (error) {
             return handleResponse(res, 500, error.message);
+        }
+    }
+
+    async checkRole(username) {
+        try {
+            const student = await this.studentService.find({ username });
+            if (!student) {
+                return {
+                    status: 404,
+                    message: "Student not found"
+                };
+            }
+            if (student.role === "admin") {
+                return {
+                    status: 200,
+                    message: "Student is admin",
+                    data: { student },
+                    role: "admin"
+                };
+            }
+            return {
+                status: 200,
+                message: "Student is admin",
+                data: { student },
+                role: "user"
+            };
+        } catch (error) {
+            throw new Error(JSON.stringify({
+                status: 500,
+                message: "An error occurred while checking the role",
+                error: error.message
+            }));
         }
     }
 
@@ -54,7 +86,7 @@ class StudentController {
             console.log(this.studentService)
             const query = key === 'id'
                 ? this.studentService.findById(value)
-                : this.studentService.find({ [key]: value }).exec();
+                : this.studentService.find({ [key]: value }).lean();
 
             const student = await query;
 
@@ -62,7 +94,7 @@ class StudentController {
                 return handleResponse (res, 404, "Student not found");
             }
 
-            return handleResponse(res, 200, "Student found", student);
+            return handleResponse(res, 200, "Student found", hidePassword(student));
         } catch (error) {
             return handleResponse(res, 500, error.message);
         }
@@ -77,7 +109,7 @@ class StudentController {
             if (!student) {
                 return handleResponse(res, 404, "Student not found");
             }
-            return handleResponse(res, 200, "Student found", student);
+            return handleResponse(res, 200, "Student found", hidePassword(student));
         } catch (error) {
             return handleResponse(res, 500, error.message);
         }
@@ -88,26 +120,26 @@ class StudentController {
             const { group } = param.params;
             let students;
             if (group === 'all') {
-                students = await this.studentService.find().exec();
+                students = await this.studentService.find().lean();
             } else {
-                students = await this.studentService.find({ group }).exec();
+                students = await this.studentService.find({ group }).lean();
             }
             if (!students) {
                 return handleResponse(res, 404, "Students not found");
             }
-            return handleResponse(res, 200, "Students found", students);
+            return handleResponse(res, 200, "Students found", hidePassword(students));
         } catch (error) {
             return handleResponse(res, 500, error.message);
         }
     }
     async updatePassword(req, res) {
         try {
-            const { username, password, oldPassword, newPassword} = req.body;
+            const { username, password, newPassword} = req.body;
             if (!username || !password) {
                 return handleResponse(res, 400, "id and password are required");
             }
 
-            const student = await this.studentService.find({ username }).exec();
+            const student = await this.studentService.find({ username }).lean();
             if (!student) {
                 return handleResponse(res, 404, "Student not found");
             }
@@ -136,13 +168,13 @@ class StudentController {
             const student = await this.studentService.find({
                 firstNameEN: firstName,
                 lastNameEN: lastName
-            }).exec();
+            }).lean();
 
             if (!student) {
                 return handleResponse (res, 404, "Student not found");
             }
 
-            return handleResponse(res, 200, "Student found", student);
+            return handleResponse(res, 200, "Student found", hidePassword(student));
         } catch (error) {
             return handleResponse(res, 500, error.message);
         }
@@ -180,15 +212,15 @@ class StudentController {
     }
     async updateActivitiesOfStudent__(student) {
         try {
-            const { username, activities, id } = student;
-            const activitiesFromDB = await activityService.activityService.find({ studentId: id }).exec();
+            const { username, id } = student;
+            const activitiesFromDB = await activityService.activityService.find({ studentId: id }).lean();
             
             const { id: _id } = activitiesFromDB[0];
             const updatedStudent = await this.studentService.findOneAndUpdate(
                 { username },
                 { $set: { activities: _id } },
                 { new: true }
-            ).exec();
+            ).lean();
 
             if (!updatedStudent) {
                 throw new Error("Failed to update student activities");
@@ -212,7 +244,7 @@ class StudentController {
         try {
             const { id } = student;
             console.log("OLD", student);
-            const existingStudent = await this.studentService.findOne({ username:id }).exec();
+            const existingStudent = await this.studentService.findOne({ username:id }).lean();
             console.log(existingStudent)
             if (!existingStudent) {
                 return {
@@ -224,7 +256,7 @@ class StudentController {
             { username:id },
             { $set: { group: student.group } },
             { new: true } // Return the updated document
-            ).exec();
+            ).lean();
             console.log(updatedStudent);
             if (!updatedStudent) {
             return {
