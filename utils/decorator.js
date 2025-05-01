@@ -1,4 +1,4 @@
-import { authService } from "../controller/controllers.js";
+import authService from "../controller/auth.controller.js";
 import { handleResponse } from "./response.js";
 class Decorator {
     constructor() {
@@ -6,7 +6,7 @@ class Decorator {
     
     async withAuth(req, res, handler, isRes = true) {
             try {
-                await authService.checkToken_(req, res, false);
+                await authService.checkToken_(req, res);
                 return (await handler(req, res));
             } catch (error) {
                 if (isRes) {

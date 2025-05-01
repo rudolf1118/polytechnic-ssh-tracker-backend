@@ -16,6 +16,7 @@ const Student = new Schema({
     password: { type: String, default: "" },
     group: { type: String, enum: ['lab-1', 'lab-2', 'lab-3', 'lab-4'], required: false, default: ""},
     role: { type: String, enum: ['admin', 'user'], default: 'user' },
+    sessionId: { type: String, ref: 'Session', default: "" },
 });
 
 export default model('Student', Student);

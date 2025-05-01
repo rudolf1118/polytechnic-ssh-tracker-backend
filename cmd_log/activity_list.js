@@ -1,4 +1,5 @@
-import { activityService, studentService } from "../controller/controllers.js"
+import activityService from "../controller/activity.controller.js";
+import studentService from "../controller/student.controller.js";
 import { initializeServerDB, closeServerDB } from "../server.js";
 import fs from 'fs';
 import path from 'path';

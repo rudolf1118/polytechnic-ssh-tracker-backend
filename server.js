@@ -1,7 +1,7 @@
 import http from 'http';
 import dbConnection from './db_connect.js';
 import { handleAPIRoutes } from './api/routes.js';
-import { studentService } from './controller/controllers.js';
+import studentService  from './controller/student.controller.js';
 import { port } from './config.js';
 import ora from 'ora';
 import { fileURLToPath } from 'url';

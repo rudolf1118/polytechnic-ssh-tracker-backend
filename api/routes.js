@@ -1,4 +1,4 @@
-import { studentService, authService, activityService } from '../controller/controllers.js';
+import { studentService, authService, sessionService, activityService } from "../controller/controllers.js";
 import { parse } from 'url';
 import { handleBody, handleResponse } from '../utils/response.js';
 import decorator from '../utils/decorator.js';
@@ -8,7 +8,6 @@ const handleStudentsRoutes = async (req, res, conf) => {
     const parsedUrl = parse(action, true);
     const { method } = req;
     const { pathname } = parsedUrl;
-    console.log("A")
     // * action example search?id=123
     if (method === 'GET') {
         if (pathname === 'search' && query) {
