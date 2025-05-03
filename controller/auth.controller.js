@@ -2,7 +2,6 @@ import { handleResponse, getUserIdFromToken, handleResponse_ } from '../utils/re
 import { encrypt, decrypt } from '../utils/crypto.js';
 import tokenGenerator from '../jwt/generate_token.js';
 import { instance as SSHConnection } from '../ssh_connection/client.js';
-import { checkCredentials } from '../ssh_connection/execution.js';
 import jwt from 'jsonwebtoken';
 import { jwt_secret, admin_basic_password, admin_basic_username, basic_username, basic_password } from '../config.js';
 import { hidePassword } from '../utils/helper.js';
@@ -15,26 +14,13 @@ class AuthController {
         this.student_service = configuration.studentService;
         this.studentService = configuration.studentService;
         this.sessionService = configuration.sessionService;
+        this.authService = configuration.authService;
         this.decorator = configuration.decorator;
-    }
-
-    async comparePassword (username, password, res) {
-        try {
-            const result = await checkCredentials(username, password);
-            if (!result) {
-                return {status: 401, message: "Invalid username or password"};
-            }
-            else if (result) {
-                return { res, status: 200, message: "Password is valid" };
-            };
-        } catch (error) {
-            throw new Error ({res, status: 500, message: "Something went wrong", error})
-        }
     }
 
     async comparePasswordDB (username, password) {
         try {
-            const student = await this.student_service.findOne({ username });
+            const student = await this.studentService.findOne({ username });
             if (!student) {
                 return false;
             }
@@ -72,7 +58,7 @@ class AuthController {
 
 
     async login(req, res) {
-        return handleResponse(await this.decorator.withAuth(req, res, this.authService.login.bind(this.authService, req, res)));
+        return handleResponse_({...await this.authService.login(req, res), res});
     }
 
     async setConnection(req, res) {

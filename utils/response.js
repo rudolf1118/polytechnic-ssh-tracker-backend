@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 export const handleResponse_ = (response, end = true) => {
     let res = response.res;
-    let statusCode = response.status || 200;
+    let statusCode = response.status || response.statusCode || 200;
     let message = response.message || null;
     let data = response.data || null;
     if (response.error) {

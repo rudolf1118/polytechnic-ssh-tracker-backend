@@ -1,9 +1,9 @@
-import studentModel from "./student.model";
-import sessionModel from "./session.model";
-import activityModel from "./activity.model";
+import StudentModel from "./student.model.js";
+import SessionModel from "./session.model.js";
+import ActivityModel from "./activity.model.js";
 
 export {
-    studentModel,
-    sessionModel,
-    activityModel
+    StudentModel,
+    SessionModel,
+    ActivityModel
 }

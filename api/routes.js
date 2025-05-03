@@ -1,4 +1,5 @@
-import { studentService, authService, sessionService, activityService } from "../controller/controllers.js";
+// import { studentService, authService, sessionService, activityService } from "../controller/controllers.js";
+import { authController } from "../di/index.js";
 import { parse } from 'url';
 import { handleBody, handleResponse } from '../utils/response.js';
 import decorator from '../utils/decorator.js';
@@ -60,7 +61,7 @@ const handleAuthRoutes = async (req, res, conf) => {
 
     if (method === 'GET') {
         if (pathname === 'connect') {
-            return await decorator.withAuth(req, res, authService.setConnection.bind(authService), false);
+            return await authController.setConnection(req, res);
         }
         if (pathname === 'disconnect') {
             return await decorator.withAuth(req, res, authService.disconnect.bind(authService));
@@ -78,7 +79,7 @@ const handleAuthRoutes = async (req, res, conf) => {
         console.log(body)
         req.body = body;
         if (pathname === 'login') {
-            return await authService.login(req, res);
+            return await authController.login(req, res);
         }
         else if (pathname === 'updatePassword') {
             // return await studentService.updatePassword(req, res);

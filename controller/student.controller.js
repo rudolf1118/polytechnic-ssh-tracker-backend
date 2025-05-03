@@ -7,7 +7,6 @@ class StudentController {
 
     constructor(configuration) {
         this.studentService = configuration.studentService;
-        this.authService = configuration.authService;
     }
 
     async getStudents(req, res) {

@@ -1,11 +1,18 @@
-// * MODELS
+// * DI (Dependency Injection) Module
+
+
+//* Decorator
+
+import decorator from '../utils/decorator.js';
+
+// * Models
 import {
   StudentModel,
   SessionModel,
   ActivityModel,
 } from '../models/models.js';
 
-// * SERVICES
+// * Services
 import {
   StudentService,
   SessionService,
@@ -13,24 +20,25 @@ import {
   AuthService,
 } from '../services/services.js';
 
-// * CONTROLLERS
+// * Controllers
 import {
   AuthController,
   StudentController,
   SessionController,
   ActivityController,
-} from '../controllers/controllers.js';
+} from '../controller/controllers.js';
 
-// * SERVICE INSTANCES
-const studentService = new StudentService(StudentModel);
-const sessionService = new SessionService(SessionModel);
-const activityService = new ActivityService(ActivityModel);
+// * Service Instances
+const studentService = new StudentService({ StudentModel, decorator });
+const sessionService = new SessionService({ SessionModel });
+const activityService = new ActivityService({ ActivityModel });
 const authService = new AuthService({
   studentService,
   sessionService,
+  decorator,
 });
 
-// * CONTROLLER INSTANCES
+// * Controller Instances
 const studentController = new StudentController({
   studentService,
 });
@@ -43,6 +51,21 @@ const activityController = new ActivityController({
 const authController = new AuthController({
   studentService,
   sessionService,
-  authService
+  authService,
+  decorator,
 });
 
+
+export {
+  studentService,
+  sessionService,
+  activityService,
+  authService,
+  studentController,
+  sessionController,
+  activityController,
+  authController,
+  // StudentService,
+  // SessionService,
+  // ActivityService,
+}
