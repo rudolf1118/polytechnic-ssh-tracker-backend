@@ -1,5 +1,4 @@
-import Activity from '../schemas/activity.schema.js';
-import { studentService } from './controllers.js';
+import Activity from '../models/activity.model.js';
 import { formatDuration, parseLastStringToEndDate, addDurationToExisted, calculateTopParticipants, hidePassword   } from '../utils/helper.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -128,7 +127,7 @@ class ActivityController {
 
             await create.save();
 
-            await studentService.studentService.findOneAndUpdate(
+            await this.studentService.studentService.findOneAndUpdate(
                 { username: name },
                 { $push: { activities: create._id } },
                 { new: true }
@@ -156,7 +155,7 @@ class ActivityController {
                 };
             }
             
-            const updatedActivityOfStudent = await studentService.studentService.findOneAndUpdate(
+            const updatedActivityOfStudent = await this.studentService.studentService.findOneAndUpdate(
                 { username },
                 { $push: { activities: existingActivity?.id } }, 
                 { $set: {modifyAt: new Date() } },
@@ -468,7 +467,7 @@ class ActivityController {
                 return handleResponse(res, 404, "Activity not found");
             }
 
-            const updatedActivityOfStudent = await studentService.studentService.findOneAndUpdate(
+            const updatedActivityOfStudent = await this.studentService.studentService.findOneAndUpdate(
                 { username: existingActivity.username },
                 { $set: { activities: [] } },
                 { new: true }
@@ -495,7 +494,7 @@ class ActivityController {
             }
             if (group !== "all") {
                 for (const activity of activities_) {
-                    const student = await this.studentService.findById(activity.studentId).lean();
+                    const student = await this.studentService.studentService.findById(activity.studentId).lean();
                     if (!student) {
                         return handleResponse(res, 404, "Student not found");
                     }
@@ -614,4 +613,5 @@ class ActivityController {
     }
 }
 
-export default new ActivityController({ activityService: Activity, studentService: studentService.studentService });
+// export default new ActivityController({ activityService: Activity, studentService: studentService.studentService });
+export default ActivityController
