@@ -27,6 +27,7 @@ export class AuthService {
     constructor(configuration) {
         this.ssh_client = configuration.sshClient;
         this.studentService = configuration.studentService;
+        this.sessionService = configuration.sessionService;
     }
 
     async comparePassword(username, password, res) {
@@ -131,8 +132,8 @@ export class AuthService {
                 },
                 session
             );
-
-            if (sessionUpdateResult.status !== 200) {
+            console.log(sessionUpdateResult);
+            if (!(sessionUpdateResult.status >= 200 && sessionUpdateResult.status <= 399)) {
                 throw new Error('Failed to update session information');
             }
             if (!user?.sessionId) {
