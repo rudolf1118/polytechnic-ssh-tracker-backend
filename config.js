@@ -17,3 +17,4 @@ export const basic_username = process.env.BASIC_USERNAME || '';
 export const basic_password = process.env.BASIC_PASSWORD || '';
 export const admin_basic_username = process.env.ADMIN_USERNAME || '';
 export const admin_basic_password = process.env.ADMIN_PASSWORD || '';
+export const master_api_key = process.env.MASTER_API_KEY || '';
