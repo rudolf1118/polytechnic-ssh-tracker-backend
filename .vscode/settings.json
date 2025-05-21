@@ -1,0 +1,18 @@
+{
+    "rest-client.environmentVariables": {
+        "$shared": {
+            "version": "v1"
+        }
+    },
+    "rest-client.defaultHeaders": {
+        "User-Agent": "vscode-restclient",
+        "Content-Type": "application/json"
+    },
+    "rest-client.enableTelemetry": false,
+    "rest-client.previewResponseInUntitledDocument": false,
+    "rest-client.timeoutinmilliseconds": 30000,
+    "rest-client.followredirect": true,
+    "rest-client.showResponseInDifferentTab": false,
+    "rest-client.rememberCookiesForSubsequentRequests": true,
+    "rest-client.requestNameAsResponseTabTitle": true
+} 

@@ -11,10 +11,10 @@ const dir = dirname(__filename);
 const caller = process.argv[1];
 const PORT = port || 3000;
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
 
   // * cors-origin check
@@ -24,16 +24,14 @@ const server = http.createServer((req, res) => {
       return;
   }
 
-    handleAPIRoutes(req, res)?.then(() => { console.log(`Request method: ${req.method}, URL: ${req.url}`); })
-        .catch((err) => {
-            console.error('Error handling request:', err);
-            res.statusCode = 500;
-            res.end('Internal Server Error');
-        }).catch((err => {
-            console.error('Error handling request:', err);
-            res.statusCode = 500;
-            res.end('Internal Server Error');
-        }));
+  try {
+    await handleAPIRoutes(req, res);
+    console.log(`Request method: ${req.method}, URL: ${req.url}`);
+  } catch (err) {
+    console.error('Error handling request:', err);
+    res.statusCode = 500;
+    res.end('Internal Server Error');
+  }
 });
 
 export const initializeServerDB = async () => {

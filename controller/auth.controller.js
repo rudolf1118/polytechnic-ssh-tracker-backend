@@ -33,6 +33,10 @@ class AuthController {
         return handleResponse(await this.decorator.withAuth(req, res, this.checkToken.bind(this, req, res, end)));
     }
 
+    async checkMasterApiKey(req, res) {
+        return handleResponse(await this.decorator.withMasterApiKey(req, res, this.checkMasterApiKey.bind(this, req, res)));
+    }
+
     async unhandledError(req, res, message) {
         try {
             return handleResponse(res, 500, message);
@@ -42,5 +46,4 @@ class AuthController {
     }
 }
 
-// export default new AuthController({studentService: studentService.studentService, sessionService: sessionService});
 export default AuthController;
