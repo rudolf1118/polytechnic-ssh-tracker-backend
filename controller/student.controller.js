@@ -83,7 +83,6 @@ class StudentController {
         try {
             const value = req?.params[key];
             if (!value) throw new Error(`${key} is required`);
-            console.log(this.studentService)
             const query = key === 'id'
                 ? this.studentService.findById(value).lean()
                 : this.studentService.find({ [key]: value }).lean();
@@ -203,9 +202,7 @@ class StudentController {
                 activities: []
             });
 
-            console.log(created);
             await created.save();
-            console.log("saved");
         } catch (error) {
             throw new Error(`Error creating student: ${error.message}`);
         }
@@ -243,9 +240,7 @@ class StudentController {
     async updateStudentsGroup(student) {
         try {
             const { id } = student;
-            console.log("OLD", student);
             const existingStudent = await this.studentService.findOne({ username:id }).lean();
-            console.log(existingStudent)
             if (!existingStudent) {
                 return {
                     status: 404,
@@ -257,7 +252,6 @@ class StudentController {
             { $set: { group: student.group } },
             { new: true } // Return the updated document
             ).lean();
-            console.log(updatedStudent);
             if (!updatedStudent) {
             return {
                 status: 500,

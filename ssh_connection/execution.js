@@ -35,7 +35,6 @@ const handleGroupBy = (data, key) => {
 }
 
 export const checkCredentials = async (username, password) => {
-    console.log("CHECK CREDENTIALS SSH", username, password);
     return await SSHConnection.checkCredentials(username, password).catch((err => {  
         throw err;
     }));
@@ -48,7 +47,6 @@ export const connectAndExecuteSSH = async (user_config) => {
         const command = 'last -i';
         const rawData = await sshClient.execCommand(command);
         await sshClient.disconnect();
-        console.log('Command output:', rawData.stdout);
         const parsed = handleDataToObject(rawData.stdout);
         const groupBy = handleGroupBy(parsed, 'username');
         const defaultDir = path.join(dir, `../db_example/${user_config.username}`);

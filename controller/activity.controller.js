@@ -194,7 +194,6 @@ class ActivityController {
             const { groupedBy } = await connectAndExecuteSSH({ username, password });
     
             const activities = await this.activityService.find().lean();
-            console.log(activities)
             if (!activities) {
                 return handleResponse(res, 404, "Activities not found");
             }
@@ -244,7 +243,6 @@ class ActivityController {
                     { new: true }
                 ).lean();
                 updated_count++;
-                console.log(updated)
             
                 if (updated.activities?.length > 300) {
                     updated.activities.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -513,7 +511,6 @@ class ActivityController {
             if(!bestActivities) {
                 return handleResponse(res, 404, "Best activities not found");
             }
-            console.log(bestActivities)
             return handleResponse(res, 200, "Best activities found", bestActivities);
         } catch (error) {
             return handleResponse(res, 500, error.message);
@@ -576,7 +573,6 @@ class ActivityController {
                 }
     
                 activity.activities = uniqueActivities;
-                console.log(activity.username, totalDuration);
                 activity.durationOfActivity = totalDuration;
                 await activity.save();
             }

@@ -53,8 +53,6 @@ class AuthController {
             const [db_checking] = await Promise.all([
                 this.comparePasswordDB(user.username, user.password)
             ]);
-            console.log(user.password)
-            console.log(db_checking)
             if (!db_checking) {
                 return { status: 401, message: "Invalid username or password" };
             }
@@ -88,7 +86,6 @@ class AuthController {
             isMatch = await this.comparePassword(credentials.username, credentials.password, res).catch((error) => {throw error});
             
             if (!isMatch || !(isMatch.status >= 200 && isMatch.status <= 399)) {
-                console.log(isMatch.status)
                 return handleResponse(res, 401, "Invalid username or password");
             }
             if (user.password && user.password !== encrypted_requested_password)  {
@@ -101,7 +98,6 @@ class AuthController {
             }
             const token = await this.generateToken(user);
             if (!token || !(token.status >= 200 && token.status <= 399)) {
-                console.log(token)
                 return handleResponse(res, 401, "Invalid username or password");
             }
 
@@ -130,7 +126,6 @@ class AuthController {
             const { username, password: encrypted_password } = student;
             const real_password = decrypt(encrypted_password.split(":")[1], encrypted_password.split(":")[0]);
             const ssh_client = SSHConnection;
-            console.log(real_password)
             ssh_client.updateConnectionParams(username, real_password);
             await ssh_client.connect(credentials).catch((error) =>{
                 throw {status: 404, message: error.message};
@@ -248,7 +243,6 @@ class AuthController {
                 return handleResponse(res, 400, "Command is required");
             }
             const result = await ssh_client.execCommand(command);
-            console.log(result)
             return handleResponse(res, 200, "Command executed successfully", result);
         } catch (error) {
             return handleResponse(res, 500, error.message);

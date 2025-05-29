@@ -8,7 +8,6 @@ const handleStudentsRoutes = async (req, res, conf) => {
     const parsedUrl = parse(action, true);
     const { method } = req;
     const { pathname } = parsedUrl;
-    console.log("A")
     // * action example search?id=123
     if (method === 'GET') {
         if (pathname === 'search' && query) {
@@ -54,7 +53,6 @@ const handleStudentsRoutes = async (req, res, conf) => {
 
 const handleAuthRoutes = async (req, res, conf) => { 
     const { action, query } = conf;
-    console.log(conf)
     const parsedUrl = parse(action, true);
     const { pathname } = parsedUrl;
     const { method } = req;
