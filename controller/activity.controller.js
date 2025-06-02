@@ -18,6 +18,11 @@ class ActivityController {
         this.studentService = configuration.studentService;
     }
 
+    removeZeros(activities) {
+        activities = (Array.isArray(activities) ? activities.filter((act) => act.duration !== "00:00:00") : []);
+        return activities;
+    }
+
     async getActivities(req, res) {
         try {
             const activities = await this.activityService.find().lean();
@@ -506,6 +511,12 @@ class ActivityController {
             if (limit > activities.length) {
                 limit = activities.length;
             }
+
+            activities = activities.map((activity) => {
+                activity.activities = this.removeZeros(activity.activities);
+                return activity;
+            });
+            console.log(activities)
             const bestActivities = calculateTopParticipants(activities, limit || 10);
 
             if(!bestActivities) {
@@ -519,13 +530,18 @@ class ActivityController {
 
     async countTheBest_(limit) {
         try {
-            const activities = await this.activityService.find().lean();
-            if (!activities) {
+            const activities_ = await this.activityService.find().lean();
+            if (!activities_) {
                 return {
                     status: 404,
                     message: "Activities not found"
                 };
             }
+            let activities = activities_.map((activity) => {
+                activity.activities = this.removeZeros(activity.activities);
+                return activity;
+            });
+
             const bestActivities = calculateTopParticipants(activities, limit || 10);
             if (!bestActivities) {
                 return {
@@ -592,6 +608,9 @@ class ActivityController {
 
             const student = await this.activityService.find({ studentId: userId}).lean();
             if (!student) {
+                return handleResponse(res, 404, "Student's activity not found");
+            }
+            if (!student[0]?.activities || student[0]?.activities.length === 0) {
                 return handleResponse(res, 404, "Student's activity not found");
             }
 
