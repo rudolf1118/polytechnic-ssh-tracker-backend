@@ -57,12 +57,22 @@ npm start
 Create a `.env` file in the root directory with the following variables:
 
 ```env
-PORT=3000
-MONGODB_URI=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-SSH_HOST=your_ssh_host
-SSH_USER=your_ssh_user
-SSH_PASSWORD=your_ssh_password
+SSH_HOST=
+SSH_USERNAME=
+SSH_PASSWORD=
+MONGODB_URI=
+JWT_SECRET=
+CRYPTO_ALGORITHM=
+CRYPTO_SECRET_KEY=
+CRYPTO_IV=
+BASIC_USERNAME=
+BASIC_PASSWORD=
+ADMIN_USERNAME=
+ADMIN_PASSWORD=
+PORT=
+MASTER_KEY=
+API_URL_DEV=
+API_URL_PROD=
 ```
 
 ## API Documentation
