@@ -1,4 +1,4 @@
-# Polytech Tracker Backend
+# Polytech SSH Activity Tracker Backend
 
 A Node.js backend service for tracking student activities and managing student information at Polytech.
 
@@ -14,6 +14,10 @@ A Node.js backend service for tracking student activities and managing student i
 - [License](#license)
 - [Database Schema](#database-schema)
 - [Error Handling](#error-handling)
+- [Rate Limiting](#rate-limiting)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
 
 ## Features
 
@@ -57,6 +61,7 @@ npm start
 Create a `.env` file in the root directory with the following variables:
 
 ```env
+<<<<<<< HEAD
 SSH_HOST=
 SSH_USERNAME=
 SSH_PASSWORD=
@@ -73,6 +78,30 @@ PORT=
 MASTER_KEY=
 API_URL_DEV=
 API_URL_PROD=
+=======
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+
+# Database Configuration
+MONGODB_URI=your_mongodb_connection_string
+MONGODB_USER=your_mongodb_user
+MONGODB_PASSWORD=your_mongodb_password
+
+# JWT Configuration
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRATION=24h
+
+# SSH Configuration
+SSH_HOST=your_ssh_host
+SSH_USER=your_ssh_user
+SSH_PASSWORD=your_ssh_password
+SSH_PORT=22
+
+# Rate Limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
+>>>>>>> 2526c82 (update READEM)
 ```
 
 ## API Documentation
@@ -106,6 +135,20 @@ API_URL_PROD=
 }
 ```
 
+**Error Response Example:**
+```json
+{
+    "error": {
+        "code": "AUTH_FAILED",
+        "message": "Invalid username or password",
+        "details": {
+            "attempts": 1,
+            "maxAttempts": 5
+        }
+    }
+}
+```
+
 #### GET /api/auth/verify
 - Verify JWT token validity
 - Headers: `Authorization: Bearer <token>`
@@ -121,23 +164,16 @@ API_URL_PROD=
 }
 ```
 
-#### POST /api/auth/updatePassword
-- Update user password
-- Headers: `Authorization: Bearer <token>`
-- Body: `{ currentPassword: string, newPassword: string }`
-
-**Request Example:**
+**Error Response Example:**
 ```json
 {
-    "currentPassword": "oldpassword123",
-    "newPassword": "newsecurepassword456"
-}
-```
-
-**Response Example:**
-```json
-{
-    "message": "Password updated successfully"
+    "error": {
+        "code": "INVALID_TOKEN",
+        "message": "Token has expired",
+        "details": {
+            "expiredAt": "2024-01-01T00:00:00.000Z"
+        }
+    }
 }
 ```
 
@@ -174,35 +210,18 @@ GET /api/student/search?group=A1
 }
 ```
 
-#### POST /api/student/create
-- Create new student
-- Headers: `Authorization: Bearer <token>`
-- Body: Student object
-
-**Request Example:**
+**Error Response Example:**
 ```json
 {
-    "firstName": "John",
-    "lastName": "Doe",
-    "username": "johndoe",
-    "password": "securepassword123",
-    "group": "A1",
-    "email": "john.doe@example.com"
-}
-```
-
-**Response Example:**
-```json
-{
-    "message": "Student created successfully",
-    "data": {
-        "id": "123456",
-        "firstName": "John",
-        "lastName": "Doe",
-        "username": "johndoe",
-        "group": "A1",
-        "email": "john.doe@example.com",
-        "createdAt": "2024-01-01T00:00:00.000Z"
+    "error": {
+        "code": "STUDENT_NOT_FOUND",
+        "message": "No student found with the provided criteria",
+        "details": {
+            "searchCriteria": {
+                "firstName": "John",
+                "lastName": "Doe"
+            }
+        }
     }
 }
 ```
@@ -238,66 +257,11 @@ GET /api/activity/search?studentId=123456
             "points": 100,
             "createdAt": "2024-01-01T00:00:00.000Z"
         }
-    ]
-}
-```
-
-#### GET /api/activity/getTopParticipants
-- Get top participants
-- Query parameters:
-  - `limit`: number of results
-  - `group`: filter by group
-
-**Request Example:**
-```
-GET /api/activity/getTopParticipants?limit=10&group=A1
-```
-
-**Response Example:**
-```json
-{
-    "message": "Top participants retrieved",
-    "data": [
-        {
-            "studentId": "123456",
-            "firstName": "John",
-            "lastName": "Doe",
-            "group": "A1",
-            "totalPoints": 850,
-            "activities": 15
-        }
-    ]
-}
-```
-
-#### POST /api/activity/create
-- Create new activity
-- Headers: `Authorization: Bearer <token>`
-- Body: Activity object
-
-**Request Example:**
-```json
-{
-    "studentId": "123456",
-    "type": "assignment",
-    "title": "Project Submission",
-    "description": "Submitted final project",
-    "points": 100
-}
-```
-
-**Response Example:**
-```json
-{
-    "message": "Activity created successfully",
-    "data": {
-        "id": "789012",
-        "studentId": "123456",
-        "type": "assignment",
-        "title": "Project Submission",
-        "description": "Submitted final project",
-        "points": 100,
-        "createdAt": "2024-01-01T00:00:00.000Z"
+    ],
+    "pagination": {
+        "total": 1,
+        "page": 1,
+        "limit": 10
     }
 }
 ```
@@ -315,7 +279,10 @@ GET /api/activity/getTopParticipants?limit=10&group=A1
     group: String,
     email: String,
     createdAt: Date,
-    updatedAt: Date
+    updatedAt: Date,
+    lastLogin: Date,
+    status: String,
+    role: String
 }
 ```
 
@@ -329,7 +296,9 @@ GET /api/activity/getTopParticipants?limit=10&group=A1
     description: String,
     points: Number,
     createdAt: Date,
-    updatedAt: Date
+    updatedAt: Date,
+    status: String,
+    metadata: Object
 }
 ```
 
@@ -352,25 +321,105 @@ Common error codes:
 - 401: Unauthorized
 - 403: Forbidden
 - 404: Not Found
+- 429: Too Many Requests
 - 500: Internal Server Error
 
-## Development
+## Rate Limiting
 
-The project uses ESLint for code quality. Run the linter:
+The API implements rate limiting to prevent abuse. The current limits are:
+- 100 requests per 15 minutes per IP address
+- 1000 requests per hour per user
 
-```bash
-npm run lint
+When rate limit is exceeded, the API returns:
+```json
+{
+    "error": {
+        "code": "RATE_LIMIT_EXCEEDED",
+        "message": "Too many requests, please try again later",
+        "details": {
+            "retryAfter": 900, // seconds
+            "limit": 100,
+            "window": "15m"
+        }
+    }
+}
 ```
 
-## Scripts
+## Deployment
 
-- `npm start`: Start the server
-- `npm run dev`: Start the server with nodemon for development
-- `npm run getStudentList`: Get list of students
-- `npm run getActivityList`: Get list of activities
-- `npm run connectSSH`: Connect to SSH server
-- `npm run top`: Get top participants
-- `npm run sync_activities`: Synchronize activities
+### Production Deployment
+
+1. Set up environment variables:
+```bash
+export NODE_ENV=production
+export PORT=3000
+export MONGODB_URI=your_production_mongodb_uri
+export JWT_SECRET=your_production_jwt_secret
+```
+
+2. Build the application:
+```bash
+npm run build
+```
+
+3. Start the server:
+```bash
+npm start
+```
+
+### Docker Deployment
+
+1. Build the Docker image:
+```bash
+docker build -t polytech-tracker-backend .
+```
+
+2. Run the container:
+```bash
+docker run -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e MONGODB_URI=your_mongodb_uri \
+  -e JWT_SECRET=your_jwt_secret \
+  polytech-tracker-backend
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. Database Connection Issues
+```bash
+Error: MongoDB connection failed
+Solution: Check MONGODB_URI and network connectivity
+```
+
+2. JWT Authentication Issues
+```bash
+Error: Invalid token
+Solution: Ensure JWT_SECRET is properly set and token is not expired
+```
+
+3. SSH Connection Issues
+```bash
+Error: SSH connection failed
+Solution: Verify SSH credentials and server accessibility
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the existing code style
+- Write tests for new features
+- Update documentation for API changes
+- Use conventional commits
+- Keep commits atomic and focused
 
 ## Security
 
@@ -379,6 +428,10 @@ npm run lint
 - CORS enabled
 - SSH connection security
 - Environment variable protection
+- Rate limiting
+- Input validation
+- XSS protection
+- SQL injection prevention
 
 ## License
 
