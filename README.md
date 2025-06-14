@@ -363,14 +363,10 @@ Solution: Verify SSH credentials and server accessibility
 ## Security
 
 - JWT-based authentication
-- Password hashing
-- CORS enabled
 - SSH connection security
 - Environment variable protection
 - Rate limiting
 - Input validation
-- XSS protection
-- SQL injection prevention
 
 ## License
 
