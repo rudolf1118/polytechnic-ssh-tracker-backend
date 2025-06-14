@@ -17,6 +17,11 @@ class ActivityController {
         this.studentService = configuration.studentService;
     }
 
+    removeZeros(activities) {
+        activities = (Array.isArray(activities) ? activities.filter((act) => act.duration !== "00:00:00") : []);
+        return activities;
+    }
+
     async getActivities(req, res) {
         try {
             const activities = await this.activityService.find().lean();
@@ -193,7 +198,6 @@ class ActivityController {
             const { groupedBy } = await connectAndExecuteSSH({ username, password });
     
             const activities = await this.activityService.find().lean();
-            console.log(activities)
             if (!activities) {
                 return handleResponse(res, 404, "Activities not found");
             }
@@ -243,7 +247,6 @@ class ActivityController {
                     { new: true }
                 ).lean();
                 updated_count++;
-                console.log(updated)
             
                 if (updated.activities?.length > 300) {
                     updated.activities.sort((a, b) => new Date(a.date) - new Date(b.date));
@@ -507,12 +510,17 @@ class ActivityController {
             if (limit > activities.length) {
                 limit = activities.length;
             }
+
+            activities = activities.map((activity) => {
+                activity.activities = this.removeZeros(activity.activities);
+                return activity;
+            });
+            console.log(activities)
             const bestActivities = calculateTopParticipants(activities, limit || 10);
 
             if(!bestActivities) {
                 return handleResponse(res, 404, "Best activities not found");
             }
-            console.log(bestActivities)
             return handleResponse(res, 200, "Best activities found", bestActivities);
         } catch (error) {
             return handleResponse(res, 500, error.message);
@@ -521,13 +529,18 @@ class ActivityController {
 
     async countTheBest_(limit) {
         try {
-            const activities = await this.activityService.find().lean();
-            if (!activities) {
+            const activities_ = await this.activityService.find().lean();
+            if (!activities_) {
                 return {
                     status: 404,
                     message: "Activities not found"
                 };
             }
+            let activities = activities_.map((activity) => {
+                activity.activities = this.removeZeros(activity.activities);
+                return activity;
+            });
+
             const bestActivities = calculateTopParticipants(activities, limit || 10);
             if (!bestActivities) {
                 return {
@@ -575,7 +588,6 @@ class ActivityController {
                 }
     
                 activity.activities = uniqueActivities;
-                console.log(activity.username, totalDuration);
                 activity.durationOfActivity = totalDuration;
                 await activity.save();
             }
@@ -595,6 +607,9 @@ class ActivityController {
 
             const student = await this.activityService.find({ studentId: userId}).lean();
             if (!student) {
+                return handleResponse(res, 404, "Student's activity not found");
+            }
+            if (!student[0]?.activities || student[0]?.activities.length === 0) {
                 return handleResponse(res, 404, "Student's activity not found");
             }
 

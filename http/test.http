@@ -1,0 +1,16 @@
+@apiUrlDev = {{$dotenv P17SDK_CONNECTOR_API_PATH}}
+@apiUrlProd = {{$dotenv P17SDK_CONNECTOR_API_PATH_PROD}}
+@username = {{$dotenv ADMIN_USERNAME}}
+@password = {{$dotenv ADMIN_PASSWORD}}
+
+###
+POST {{{{apiUrlDev}}}}/api/auth/login
+
+{
+    "username": "",
+    "password": ""
+}
+
+###
+GET {{{{apiUrlDev}}}}/api/activity/getTopParticipants?limit=20&group=all
+Authorization: Bearer
