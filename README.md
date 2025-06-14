@@ -14,9 +14,6 @@ A Node.js backend service for tracking student activities and managing student i
 - [License](#license)
 - [Database Schema](#database-schema)
 - [Error Handling](#error-handling)
-- [Rate Limiting](#rate-limiting)
-- [Deployment](#deployment)
-- [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 
 ## Features
@@ -305,27 +302,6 @@ Common error codes:
 - 429: Too Many Requests
 - 500: Internal Server Error
 
-## Rate Limiting
-
-The API implements rate limiting to prevent abuse. The current limits are:
-- 100 requests per 15 minutes per IP address
-- 1000 requests per hour per user
-
-When rate limit is exceeded, the API returns:
-```json
-{
-    "error": {
-        "code": "RATE_LIMIT_EXCEEDED",
-        "message": "Too many requests, please try again later",
-        "details": {
-            "retryAfter": 900, // seconds
-            "limit": 100,
-            "window": "15m"
-        }
-    }
-}
-```
-
 ## Deployment
 
 ### Production Deployment
@@ -347,24 +323,6 @@ npm run build
 ```bash
 npm start
 ```
-
-### Docker Deployment
-
-1. Build the Docker image:
-```bash
-docker build -t polytech-tracker-backend .
-```
-
-2. Run the container:
-```bash
-docker run -p 3000:3000 \
-  -e NODE_ENV=production \
-  -e MONGODB_URI=your_mongodb_uri \
-  -e JWT_SECRET=your_jwt_secret \
-  polytech-tracker-backend
-```
-
-## Troubleshooting
 
 ### Common Issues
 
