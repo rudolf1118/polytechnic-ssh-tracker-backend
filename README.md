@@ -1,4 +1,4 @@
-# Polytech SSH Activity Tracker Backend
+# Polytech SSH Server's Activity Tracker Backend
 
 A Node.js backend service for tracking student activities and managing student information at Polytech.
 
@@ -61,24 +61,6 @@ npm start
 Create a `.env` file in the root directory with the following variables:
 
 ```env
-<<<<<<< HEAD
-SSH_HOST=
-SSH_USERNAME=
-SSH_PASSWORD=
-MONGODB_URI=
-JWT_SECRET=
-CRYPTO_ALGORITHM=
-CRYPTO_SECRET_KEY=
-CRYPTO_IV=
-BASIC_USERNAME=
-BASIC_PASSWORD=
-ADMIN_USERNAME=
-ADMIN_PASSWORD=
-PORT=
-MASTER_KEY=
-API_URL_DEV=
-API_URL_PROD=
-=======
 # Server Configuration
 PORT=3000
 NODE_ENV=development
@@ -101,7 +83,6 @@ SSH_PORT=22
 # Rate Limiting
 RATE_LIMIT_WINDOW_MS=900000
 RATE_LIMIT_MAX_REQUESTS=100
->>>>>>> 2526c82 (update READEM)
 ```
 
 ## API Documentation
@@ -436,65 +417,3 @@ Solution: Verify SSH credentials and server accessibility
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## **Endpoints**
-
-### **Student Endpoints**
-
-| Endpoint                  | Method | Description                                      |
-|---------------------------|--------|--------------------------------------------------|
-| `/student/search`         | GET    | Search for a student by `firstName` and `lastName`, `username`, `id`, or `group`. |
-| `/student/me`             | GET    | Get the current logged-in student's details.    |
-| `/student/create`         | POST   | Create a new student.                           |
-
----
-
-### **Auth Endpoints**
-
-| Endpoint                  | Method | Description                                      |
-|---------------------------|--------|--------------------------------------------------|
-| `/auth/connect`           | GET    | Establish an SSH connection for the user.       |
-| `/auth/disconnect`        | GET    | Disconnect the SSH connection for the user.     |
-| `/auth/verify`            | GET    | Verify the validity of the user's token.        |
-| `/auth/login`             | POST   | Log in a user and generate a token.             |
-| `/auth/updatePassword`    | POST   | Update the user's password.                     |
-
----
-
-### **Activity Endpoints**
-
-| Endpoint                          | Method | Description                                      |
-|-----------------------------------|--------|--------------------------------------------------|
-| `/activity/search`                | GET    | Search for an activity by `firstName`, `lastName`, `username`, or `id`. |
-| `/activity/me`                    | GET    | Get the current logged-in student's activities. |
-| `/activity/getTopParticipants`    | GET    | Get the top participants based on activity.     |
-| `/activity/create`                | POST   | Create a new activity.                          |
-| `/activity/update`                | POST   | Update an existing activity.                    |
-| `/activity/sync`                  | POST   | Sync activities and update the database.        |
-| `/activity/recount`               | POST   | Recount and update duplicate activities.        |
-
----
-
-## **Request and Response Examples**
-
-### **1. Student Endpoints**
-
-#### **GET /student/search**
-**Request:**
-```
-GET /api/student/search?firstName=John&lastName=Doe
-
-**Response**
-{
-    "message": "Student found",
-    "data": {
-        "firstName": "John",
-        "lastName": "Doe",
-        "username": "johndoe",
-        "group": "A1"
-    }
-}
-```
-
