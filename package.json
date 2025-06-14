@@ -2,14 +2,21 @@
   "type": "module",
   "scripts": {
     "build": "",
-    "start_": "nodemon server.js",
+    "dev": "nodemon server.js",
     "start": "node server.js",
     "getStudentList": "node ./cmd_log/student_list.js",
     "getActivityList": "node ./cmd_log/activity_list.js",
     "connectSSH": "node ./ssh_connection/client.js connect",
     "top": "node ./cmd_log/activity_list.js getTopParticipants",
     "sync_activities": "npm run getActivityList sync_activities",
-    "dev": "nodemon server.js"
+    "pm2:start": "node pm2-start.js",
+    "pm2:stop": "pm2 stop all",
+    "pm2:restart": "pm2 restart all",
+    "pm2:delete": "pm2 delete all",
+    "pm2:logs": "pm2 logs",
+    "pm2:monit": "pm2 monit",
+    "pm2:status": "pm2 status",
+    "production": "NODE_ENV=production node pm2-start.js"
   },
   "dependencies": {
     "dotenv": "^16.5.0",
@@ -25,6 +32,7 @@
     "@eslint/js": "^9.25.1",
     "eslint": "^9.25.1",
     "eslint-config-next": "^15.3.1",
-    "globals": "^16.0.0"
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3"
   }
 }

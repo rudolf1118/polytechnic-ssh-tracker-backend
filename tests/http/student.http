@@ -1,0 +1,40 @@
+@baseUrl = {{$dotenv API_URL}}
+@masterKey = {{$dotenv MASTER_API_KEY}}
+@authToken = {{$dotenv AUTH_TOKEN}}
+
+### @name student
+### Variables are loaded from http-client.env.json
+
+### Get Student by ID
+GET {{baseUrl}}/student/search?id=123
+X-API-Key: {{masterKey}}
+
+### Get Student by Username
+GET {{baseUrl}}/student/search?username=john_doe
+X-API-Key: {{masterKey}}
+
+    ### Get Student by Name
+GET {{baseUrl}}/student/search?firstName=John&lastName=Doe
+X-API-Key: {{masterKey}}
+
+### Get Student by Group
+GET {{baseUrl}}/student/search?group=CS101
+X-API-Key: {{masterKey}}
+
+### Get Current Student
+GET {{baseUrl}}/student/me
+Authorization: Bearer {{authToken}}
+X-API-Key: {{masterKey}}
+
+### Create Student
+POST {{baseUrl}}/student/create
+Content-Type: application/json
+X-API-Key: {{masterKey}}
+
+{
+    "username": "new_student",
+    "firstName": "New",
+    "lastName": "Student",
+    "group": "CS101",
+    "password": "password123"
+} 

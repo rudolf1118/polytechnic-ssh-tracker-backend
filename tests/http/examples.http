@@ -1,0 +1,7 @@
+@baseUrl = {{$dotenv API_URL}}
+@masterKey = {{$dotenv MASTER_API_KEY}}
+@authToken = {{$dotenv AUTH_TOKEN}}
+
+### Get Ping
+GET {{baseUrl}}/api/ping
+X-API-Key: {{masterKey}}

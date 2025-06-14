@@ -1,6 +1,5 @@
-import Student from '../schemas/student.schema.js';
+import Student from '../models/student.model.js';
 import { handleResponse, getUserIdFromToken } from '../utils/response.js';
-import { authService, activityService } from './controllers.js';
 import { encrypt } from '../utils/crypto.js';
 import { hidePassword } from '../utils/helper.js';
 
@@ -143,7 +142,7 @@ class StudentController {
                 return handleResponse(res, 404, "Student not found");
             }
             const currentPassword = student.password ? newPassword : password;
-            const toChange = await authService.comparePassword(username, currentPassword, res);
+            const toChange = await this.authService.comparePassword(username, currentPassword, res);
             if (toChange) {
                 const {iv, encryptedData} = encrypt(newPassword);
                 student.password = iv + ":" + encryptedData;
@@ -210,7 +209,7 @@ class StudentController {
     async updateActivitiesOfStudent__(student) {
         try {
             const { username, id } = student;
-            const activitiesFromDB = await activityService.activityService.find({ studentId: id }).lean();
+            const activitiesFromDB = await this.activityService.activityService.find({ studentId: id }).lean();
             
             const { id: _id } = activitiesFromDB[0];
             const updatedStudent = await this.studentService.findOneAndUpdate(
@@ -273,4 +272,5 @@ class StudentController {
     }
 }
 
-export default new StudentController({ studentService: Student });
+// export default new StudentController({ studentService: Student });
+export default StudentController;

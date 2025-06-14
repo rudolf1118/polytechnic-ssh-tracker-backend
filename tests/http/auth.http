@@ -1,0 +1,56 @@
+@baseUrl = {{$dotenv API_URL}}
+@masterKey = {{$dotenv MASTER_API_KEY}}
+
+### Variables for different environments
+@dev = {{$dotenv DEV_API_URL}}
+@prod = {{$dotenv PROD_API_URL}}
+@username = {{$dotenv ADMIN_USERNAME}}
+@password = {{$dotenv ADMIN_PASSWORD}}
+
+### @name auth
+### Variables are loaded from http-client.env.json
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+# X-API-Key: {{masterKey}}
+
+{
+    "username": "{{username}}",
+    "password": "{{password}}"
+}
+
+### Verify Token
+GET {{baseUrl}}/api/auth/verify
+Authorization: Bearer 
+# X-API-Key: {{masterKey}}
+
+### Connect
+GET {{baseUrl}}/api/auth/connect
+X-API-Key: {{masterKey}}
+
+### Disconnect
+GET {{baseUrl}}/api/auth/disconnect
+Authorization: Bearer 
+# X-API-Key: {{masterKey}}
+
+### Update Password
+POST {{baseUrl}}/api/auth/updatePassword
+Content-Type: application/json
+Authorization: Bearer
+X-API-Key: {{masterKey}}
+
+{
+    "oldPassword": "current_password",
+    "newPassword": "new_password"
+}
+
+### Execute SSH Command
+POST {{baseUrl}}/api/auth/execute
+Content-Type: application/json
+Authorization: Bearer
+X-API-Key: {{masterKey}}
+
+{
+    "command": "ls -la"
+} 
