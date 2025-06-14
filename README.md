@@ -1,5 +1,8 @@
 # Polytech SSH Server's Activity Tracker Backend
 
+## Project Architecture
+![Alt text here](architecture/architecture.drawio.png)
+
 A Node.js backend service for tracking student activities and managing student information at Polytech.
 
 ## Table of Contents
